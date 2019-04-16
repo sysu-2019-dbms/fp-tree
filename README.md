@@ -137,17 +137,12 @@ sudo apt install libpmem1 libpmem-dev
 ### Run the example program to check your configuration
 
 ```bash
-gcc src/pmem_example.c -lpmem -o pmem_example
-./pmem_example
+make pmem_test
 ```
 
-After execution, a string `hello, persistent memory` is written into the NVM. We can check this by
+After execution, a string `hello, persistent memory` is written into the NVM.
 
-```
-cat /pmem-fs/myfile
-```
-
-You should see the output: 
+You should see the following output: 
 
 ```
 hello, persistent memory
