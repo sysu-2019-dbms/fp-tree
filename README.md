@@ -12,11 +12,11 @@ Group Members:
 
 # Prerequisite
 
-### Simulating NVM on Linux
+## Simulating NVM on Linux
 
 *(Note: tested on Ubuntu 18.04 or above)*
 
-#### Check your DRAM status by executing 
+### Check your DRAM status by executing 
 
 ```bash
 dmesg | grep BIOS-e820
@@ -41,7 +41,7 @@ You should see something like the following output (output may vary):
 
 The system has 8G RAM and 4G~8G space is available for simulation. 
 
-#### Make some DRAM persistent
+### Make some DRAM persistent
 
 We make this DRAM space persistent by editing the booting parameters of the system. Open `/etc/default/grub` as root user in any editor you like:
 
@@ -62,7 +62,7 @@ sudo update-grub
 sudo reboot
 ```
 
-#### Check NVM simulation
+### Check NVM simulation
 
 After rebooting, check if you have successfully simulated the NVM by:
 
@@ -107,7 +107,7 @@ Sector size (logical/physical): 512 bytes / 4096 bytes
 I/O size (minimum/optimal): 4096 bytes / 4096 bytes
 ```
 
-#### Mounting the device
+### Mounting the device
 
 Firstly we format the NVM device to EXT4 FS.
 
@@ -127,13 +127,13 @@ Finally we mount the device:
 sudo mount -o dax /dev/pmem0 /pmem-fs
 ```
 
-#### Install libpmem library
+### Install libpmem library
 
 ```bash
 sudo apt install libpmem1 libpmem-dev
 ```
 
-#### Run the example program to check your configuration
+### Run the example program to check your configuration
 
 ```bash
 gcc src/pmem_example.c -lpmem -o pmem_example
