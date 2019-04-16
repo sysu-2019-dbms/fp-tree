@@ -119,6 +119,7 @@ Then we create a folder for mounting:
 
 ```bash
 sudo mkdir /pmem-fs
+sudo chown `whoami` /pmem-fs
 ```
 
 Finally we mount the device:
