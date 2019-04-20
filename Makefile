@@ -1,8 +1,10 @@
 CC=gcc
 BUILD_DIR=build
+CFLAGS=-g
 pmem_example: src/pmem_example.c
+	@echo "Building $@"
 	@mkdir -p build
-	@gcc $< -lpmem -o $(BUILD_DIR)/$@
+	@gcc $(CFLAGS) $< -lpmem -o $(BUILD_DIR)/$@
 
 pmem_test: pmem_example
 	@./$(BUILD_DIR)/$<
