@@ -15,3 +15,10 @@ Group Members:
 Firstly make sure your system meets the requirement of running Ubuntu 18.04 (or higher) and follow the instructions in [Prerequisite](PREREQUISITE.md) section to set up an environment for NVM simulation.
 
 ## Benchmark
+
+Run YCSB on level-db:
+
+```
+make lycsb
+./build/lycsb
+```
