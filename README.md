@@ -20,5 +20,5 @@ Run YCSB on level-db:
 
 ```
 make lycsb
-./build/lycsb
+LEVELDB_DB_PATH=/path/to/leveldb ./build/lycsb
 ```
