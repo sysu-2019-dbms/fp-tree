@@ -5,7 +5,13 @@
             "defines": [
                 "_DEBUG",
                 "UNICODE",
-                "_UNICODE"
+                "_UNICODE",
+                "LEVELDB_DB_PATH=\"\"",
+                "PROJECT_ROOT=\"\""
+            ],
+            "includePath": [
+                "${workspaceFolder}/include",
+                "${workspaceFolder}/leveldb/include"
             ],
             "compilerPath": "/usr/bin/g++",
             "cStandard": "c11",
