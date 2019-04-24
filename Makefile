@@ -13,13 +13,10 @@ LIBRARY:=-lleveldb -lpthread
 
 lycsb: src/lycsb.cpp
 	@echo "Building $@"
-	@if ! [ -d "$(PROJECT_ROOT)/leveldb" ]; then \
+	@if ! [ -d "$(PROJECT_ROOT)/leveldb" ] || ! [ -f "$(PROJECT_ROOT)/leveldb/build/libleveldb.a" ]; then \
         echo "leveldb not cloned"; \
 		git submodule init; \
 		git submodule update; \
-    fi
-
-	@if ! [ -f "$(PROJECT_ROOT)/leveldb/build/libleveldb.a" ]; then \
 		cd leveldb; \
 		echo "building leveldb"; \
 		mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && cmake --build .; \

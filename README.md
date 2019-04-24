@@ -19,6 +19,6 @@ Firstly make sure your system meets the requirement of running Ubuntu 18.04 (or 
 Run YCSB on level-db:
 
 ```
-make lycsb
+LEVELDB_DB_PATH=/path/to/leveldb make lycsb
 ./build/lycsb
 ```
