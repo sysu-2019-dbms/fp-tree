@@ -3,6 +3,7 @@ CXX:=g++
 BUILD_DIR:=build
 CFLAGS:=-g
 PROJECT_ROOT:=$(shell pwd)
+LEVELDB_DB_PATH:=/tmp/leveldb
 LEVELDB_PATH:=$(PROJECT_ROOT)/leveldb
 LEVELDB_INCLUDE_PATH:=$(LEVELDB_PATH)/include
 LEVELDB_LIBRARY_PATH:=$(LEVELDB_PATH)/build
@@ -14,7 +15,7 @@ LIBRARY:=-lleveldb -lpthread
 lycsb: src/lycsb.cpp
 	@echo "Building $@"
 	@if ! [ -d "$(PROJECT_ROOT)/leveldb" ] || ! [ -f "$(PROJECT_ROOT)/leveldb/build/libleveldb.a" ]; then \
-        echo "leveldb not cloned"; \
+    echo "leveldb not cloned"; \
 		git submodule init; \
 		git submodule update; \
 		cd leveldb; \
