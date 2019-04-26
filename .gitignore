@@ -35,4 +35,8 @@
 build
 **/bin
 
+# Tags
+cscope.*
+tags
+
 .vscode/ipch
