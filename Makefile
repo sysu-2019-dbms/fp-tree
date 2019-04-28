@@ -14,7 +14,14 @@ pmem_test: pmem_example
 	@./$(BUILD_DIR)/$<
 	@cat /pmem-fs/myfile
 
-.PHONY: clean
+.PHONY: tags clean
+
+tags:
+	@echo "Generating Tags..."
+	@rm -f cscope.files cscope.in.out cscope.out cscope.po.out tags
+	@find . -type f -regextype posix-extended -regex ".*\.(c|cpp|h)" >cscope.files
+	@cscope -bq
+	@ctags -L cscope.files
 
 clean:
 	rm -rf build
