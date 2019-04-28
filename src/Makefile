@@ -45,7 +45,7 @@ $(PALLOCATOR) :
 $(LYCSB): lycsb.cpp
 	@echo "Building $@"
 	@if ! [ -d "$(PROJECT_ROOT)/leveldb" ] || ! [ -f "$(PROJECT_ROOT)/leveldb/build/libleveldb.a" ]; then \
-    echo "leveldb not cloned"; \
+    	echo "leveldb not cloned"; \
 		cd $(PROJECT_ROOT); \
 		git submodule init; \
 		git submodule update; \
