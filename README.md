@@ -25,12 +25,11 @@ cd src && make LEVELDB_DB_PATH=/path/to/leveldb ./bin/lycsb
 
 ## Google Test
 
-### build
-
 ```shell
 cd test && make all
 ./bin/utility_test
 ./bin/fptree_test
 ```
 
-`make all` will build googletest library into directory `test`, or you can try `make ./bin/utility_test` and `make ./bin/fptree_test` if you have global googletest installed.
+`make all` will build googletest library into directory `test`. You can try `make ./bin/utility_test` and `make ./bin/fptree_test` if you have global googletest installed.
+
