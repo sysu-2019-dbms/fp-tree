@@ -107,14 +107,14 @@ clhash.o : $(USER_DIR)/clhash.c $(USER_HEADER_DIR)/utility/clhash.h
 
 # utility test
 $(UTILITY_TEST) : utility.o p_allocator.o clhash.o utility_test.o
-	$(CXX) $(CPPFLAGS) -L. -lgtest -lgtest_main $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CPPFLAGS) -L. -lgtest -lgtest_main $(CXXFLAGS) $^ -lpmem -o $@
 
 utility_test.o : utility_test.cpp $(USER_HEADER_DIR)/utility/p_allocator.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c utility_test.cpp -I$(USER_HEADER_DIR) -o $@
 
 # fptree test
 $(FPTREE_TEST) : fptree.o utility.o p_allocator.o clhash.o fptree_test.o
-	$(CXX) $(CPPFLAGS) -L. -lgtest -lgtest_main $(CXXFLAGS) $^ -o $@
+	$(CXX) $(CPPFLAGS) -L. -lgtest -lgtest_main $(CXXFLAGS) $^ -lpmem -o $@
 
 fptree_test.o : fptree_test.cpp $(USER_HEADER_DIR)/fptree/fptree.h
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c fptree_test.cpp -I$(USER_HEADER_DIR) -o $@
