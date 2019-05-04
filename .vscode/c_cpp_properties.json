@@ -11,6 +11,7 @@
             ],
             "includePath": [
                 "${workspaceFolder}/include",
+                "${workspaceFolder}/gtest/googletest/include",
                 "${workspaceFolder}/leveldb/include"
             ],
             "compilerPath": "/usr/bin/g++",
