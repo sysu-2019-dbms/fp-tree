@@ -91,24 +91,33 @@ libgtest_main.a : gtest-all.o gtest_main.o
 	$(AR) $(ARFLAGS) $@ $^
 
 # ===============================TODO: all below=================================
-fptree.o :
+fptree.o : $(USER_DIR)/fptree.cpp $(USER_HEADER_DIR)/fptree/fptree.h
+	$(CXX) $(CXXFLAGS) -c $(USER_DIR)/fptree.cpp -I $(USER_HEADER_DIR) -o $@
 
-utility.o : 
+utility.o : $(USER_DIR)/utility.cpp \
+		$(USER_HEADER_DIR)/utility/utility.h $(USER_HEADER_DIR)/utility/clhash.h
+	$(CXX) $(CXXFLAGS) -c $(USER_DIR)/utility.cpp -I $(USER_HEADER_DIR) -o $@
 
-p_allocator.o :
+p_allocator.o : $(USER_DIR)/p_allocator.cpp $(USER_HEADER_DIR)/utility/p_allocator.h
+	@echo ppp
+	$(CXX) $(CXXFLAGS) -c $(USER_DIR)/p_allocator.cpp -I $(USER_HEADER_DIR) -o $@
 
 clhash.o : $(USER_DIR)/clhash.c $(USER_HEADER_DIR)/utility/clhash.h
-	$(CC) $(CFLAGS) -c $(USER_DIR)/clhash.c -I $(USER_HEADER_DIR)
+	$(CC) $(CFLAGS) -c $(USER_DIR)/clhash.c -I $(USER_HEADER_DIR) -o $@
 
 # utility test
-$(UTILITY_TEST) :
+$(UTILITY_TEST) : utility.o p_allocator.o clhash.o utility_test.o
+	$(CXX) $(CPPFLAGS) -L. -lgtest -lgtest_main $(CXXFLAGS) $^ -lpmem -o $@
 
-utility_test.o :
+utility_test.o : utility_test.cpp $(USER_HEADER_DIR)/utility/p_allocator.h
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c utility_test.cpp -I$(USER_HEADER_DIR) -o $@
 
 # fptree test
-$(FPTREE_TEST) :
+$(FPTREE_TEST) : fptree.o utility.o p_allocator.o clhash.o fptree_test.o
+	$(CXX) $(CPPFLAGS) -L. -lgtest -lgtest_main $(CXXFLAGS) $^ -lpmem -o $@
 
-fptree_test.o :
+fptree_test.o : fptree_test.cpp $(USER_HEADER_DIR)/fptree/fptree.h
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c fptree_test.cpp -I$(USER_HEADER_DIR) -o $@
 
 $(BIN):
 	mkdir -p bin
