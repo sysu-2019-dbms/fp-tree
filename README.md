@@ -33,3 +33,12 @@ cd test && make all
 
 `make all` will build googletest library into directory `test`. You can try `make ./bin/utility_test` and `make ./bin/fptree_test` if you have global googletest installed.
 
+## Test Result
+
+### LYCSB
+
+![LYCSB](./images/lycsb.png)
+
+### Google Test
+
+![gtest](./images/gtest.png)
