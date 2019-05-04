@@ -19,10 +19,17 @@ GTEST_DIR = ../gtest/googletest
 # Points to the location of the Google Test libraries
 GTEST_LIB_DIR = .
 
-# Where to find user code.
-USER_DIR = ../src
+LEVELDB_INC_DIR = ../leveldb/include
 
-USER_HEADER_DIR = ../include
+# Where to find user code.
+SRC_DIR = ../src
+INC_DIR = ../include
+OBJ_DIR = ../obj
+BIN_DIR = ../bin
+LIB_DIR = ../lib
+
+SOURCE_FILES = $(shell find $(SRC_DIR) -name '*.cpp')
+OBJS = $(patsubst $(SRC_DIR)%.cpp,$(OBJ_DIR)%.o,$(SOURCE_FILES))
 
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
@@ -32,16 +39,16 @@ CPPFLAGS += -isystem $(GTEST_DIR)/include
 CFLAGS = -fPIC -std=c99 -O3 -msse4.2 -mpclmul -march=native -funroll-loops -Wstrict-overflow -Wstrict-aliasing -Wall -Wextra -pedantic -Wshadow
 
 # Flags passed to the C++ compiler.
-CXXFLAGS += -g -Wall -Wextra -pthread -std=c++11
+CXXFLAGS += -g -Wall -Wextra -pthread -std=c++11 -I$(LEVELDB_INC_DIR)
 
 # Google Test libraries
-GTEST_LIBS = libgtest.a libgtest_main.a
+GTEST_LIBS = $(LIB_DIR)/libgtest.a $(LIB_DIR)/libgtest_main.a
 
 # All tests produced by this Makefile.  Remember to add new tests you
 # created to the list.
-UTILITY_TEST = ./bin/utility_test
+UTILITY_TEST = $(BIN_DIR)/utility_test
 
-FPTREE_TEST = ./bin/fptree_test
+FPTREE_TEST = $(BIN_DIR)/fptree_test
 
 TESTS = $(UTILITY_TEST) $(FPTREE_TEST)
 
@@ -52,19 +59,15 @@ GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
 
 # House-keeping build targets.
 
-BIN = bin
-
-USER_HEADERS = ../include/*.h
-
-all : $(GTEST_LIBS) $(TESTS)
+all : $(LIB_DIR) $(GTEST_LIBS) $(BIN_DIR) $(TESTS)
 
 clean :
-	rm -f $(GTEST_LIBS) $(TESTS) *.o ../data/*
+	rm -rf $(GTEST_LIBS) $(TESTS) *.o ../data/* $(BIN_DIR) $(LIB_DIR)
 cleano :
-	rm -f $(GTEST_LIBS) *.o
+	rm -rf $(GTEST_LIBS) *.o $(BIN_DIR) $(OBJ_DIR) $(LIB_DIR)
 
 cleand : 
-	rm -f ../data/*
+	rm -rf ../data/*
 
 # Builds gtest.a and gtest_main.a.
 
@@ -76,39 +79,44 @@ GTEST_SRCS_ = $(GTEST_DIR)/src/*.cc $(GTEST_DIR)/src/*.h $(GTEST_HEADERS)
 # implementation details, the dependencies specified below are
 # conservative and not optimized.  This is fine as Google Test
 # compiles fast and for ordinary users its source rarely changes.
-gtest-all.o : $(GTEST_SRCS_)
+$(OBJ_DIR)/gtest-all.o : $(GTEST_SRCS_)
 	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest-all.cc
+            $(GTEST_DIR)/src/gtest-all.cc -o $@
 
-gtest_main.o : $(GTEST_SRCS_)
+$(OBJ_DIR)/gtest_main.o : $(GTEST_SRCS_)
 	$(CXX) $(CPPFLAGS) -I$(GTEST_DIR) $(CXXFLAGS) -c \
-            $(GTEST_DIR)/src/gtest_main.cc
+            $(GTEST_DIR)/src/gtest_main.cc -o $@
 
-libgtest.a : gtest-all.o
+$(LIB_DIR)/libgtest.a : $(OBJ_DIR)/gtest-all.o
 	$(AR) $(ARFLAGS) $@ $^
 
-libgtest_main.a : gtest-all.o gtest_main.o
+$(LIB_DIR)/libgtest_main.a : $(OBJ_DIR)/gtest-all.o $(OBJ_DIR)/gtest_main.o
 	$(AR) $(ARFLAGS) $@ $^
 
 # ===============================TODO: all below=================================
-fptree.o :
+$(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEPS) $(OBJ_DIR)
+	$(CXX) $(CXXFLAGS) -I $(INC_DIR) -c $< -o $@
 
-utility.o : 
-
-p_allocator.o :
-
-clhash.o : $(USER_DIR)/clhash.c $(USER_HEADER_DIR)/utility/clhash.h
-	$(CC) $(CFLAGS) -c $(USER_DIR)/clhash.c -I $(USER_HEADER_DIR)
+$(OBJ_DIR)/clhash.o : $(SRC_DIR)/clhash.c
+	$(CC) $(CFLAGS) -c $(SRC_DIR)/clhash.c -I $(INC_DIR) -o $@
 
 # utility test
-$(UTILITY_TEST) :
+$(UTILITY_TEST) : $(OBJ_DIR)/utility.o $(OBJ_DIR)/p_allocator.o $(OBJ_DIR)/clhash.o $(OBJ_DIR)/utility_test.o
+	$(CXX) $(CPPFLAGS) -L$(LIB_DIR) -lgtest -lgtest_main $(CXXFLAGS) $^ -lpmem -o $@
 
-utility_test.o :
+$(OBJ_DIR)/utility_test.o : utility_test.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c utility_test.cpp -I$(INC_DIR) -o $@
 
 # fptree test
-$(FPTREE_TEST) :
+$(FPTREE_TEST) : $(OBJ_DIR)/fptree.o $(OBJ_DIR)/utility.o $(OBJ_DIR)/p_allocator.o $(OBJ_DIR)/clhash.o $(OBJ_DIR)/fptree_test.o
+	$(CXX) $(CPPFLAGS) -L$(LIB_DIR) -lgtest -lgtest_main $(CXXFLAGS) $^ -lpmem -o $@
 
-fptree_test.o :
+$(OBJ_DIR)/fptree_test.o : fptree_test.cpp
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c fptree_test.cpp -I$(INC_DIR) -o $@
 
-$(BIN):
-	mkdir -p bin
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+$(OBJ_DIR):
+	mkdir -p $(OBJ_DIR)
+$(LIB_DIR):
+	mkdir -p $(LIB_DIR)

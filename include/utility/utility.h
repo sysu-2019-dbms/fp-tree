@@ -9,8 +9,8 @@
 #define LEAF_DEGREE 56
 #define INNER_DEGREE 4096
 
-#define MAX_KEY UINT64_MAX;
-#define MAX_VALUE UINT64_MAX;
+#define MAX_KEY UINT64_MAX
+#define MAX_VALUE UINT64_MAX
 
 #define LEAF_GROUP_AMOUNT 16
 #define ILLEGAL_FILE_ID   0
@@ -25,19 +25,19 @@ typedef uint64_t  Key;    // key(8 byte)
 typedef uint64_t  Value;  // value(8 byte)
 
 //leaves file and pallocator data storing place
-const string DATA_DIR =  ""; // TODO
+const string DATA_DIR =  "/pmem-fs/"; // TODO
 
 // leaf header length, the bitmap is simply one byte for a leaf
 const uint64_t LEAF_GROUP_HEAD = sizeof(uint64_t) + LEAF_GROUP_AMOUNT;
 
-typedef struct t_PPointer
+struct PPointer
 {
     /* data */
     uint64_t fileId;
     uint64_t offset;
 
-    bool operator==(const t_PPointer p) const;
-} PPointer;
+    bool operator==(const PPointer p) const;
+} __attribute__((packed));
 
 uint64_t calLeafSize();
 
