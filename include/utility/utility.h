@@ -30,14 +30,14 @@ const string DATA_DIR =  "/pmem-fs/"; // TODO
 // leaf header length, the bitmap is simply one byte for a leaf
 const uint64_t LEAF_GROUP_HEAD = sizeof(uint64_t) + LEAF_GROUP_AMOUNT;
 
-typedef struct t_PPointer
+struct PPointer
 {
     /* data */
     uint64_t fileId;
     uint64_t offset;
 
-    bool operator==(const t_PPointer p) const;
-} PPointer;
+    bool operator==(const PPointer p) const;
+} __attribute__((packed));
 
 uint64_t calLeafSize();
 
