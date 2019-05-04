@@ -17,12 +17,12 @@ uint64_t calLeafSize() {
 
 uint64_t countOneBits(Byte b) {
     return __builtin_popcount(b);
-    uint64_t count = 0;
+    /* uint64_t count = 0;
     while(b != 0) {
         count++;
         b = b & (b - 1);
     }
-    return count;
+    return count; */
 }
 
 // func that generates the fingerprints
