@@ -9,6 +9,33 @@ using std::string;
 using std::vector;
 using std::map;
 
+struct allocator_catalog {
+    uint64_t maxFileId;
+    uint64_t freeNum;
+    PPointer startLeaf;
+} __attribute__((packed));
+
+struct empty_free_list {
+} __attribute__((packed));
+
+struct key_value {
+    Key   key;
+    Value value;
+} __attribute__((packed));
+
+struct leaf {
+    Byte      bitmap[(LEAF_DEGREE * 2 + 7) / 8];
+    PPointer  pNext;
+    Byte      fingerprints[LEAF_DEGREE * 2];
+    key_value kv[LEAF_DEGREE * 2];
+} __attribute__((packed));
+
+struct leaf_group {
+    uint64_t usedNum;
+    Byte     bitmap[LEAF_GROUP_AMOUNT];
+    leaf     leaves[LEAF_GROUP_AMOUNT];
+} __attribute__((packed));
+
 // Use this to allocate or free a leaf node in NVM
 class PAllocator {
 private:
@@ -17,7 +44,7 @@ private:
     uint64_t             maxFileId;     // current fileId not used
     uint64_t             freeNum;       // free leaves amount
     vector<PPointer>     freeList;      // leaves list: the leaf that has been allocatored but is free
-    map<uint64_t, fp_tree::pmem_stream> fId2PmAddr;    // the map of fileId to pmem address
+    map<uint64_t, fp_tree::pmem_ptr<leaf_group>> fId2PmAddr;    // the map of fileId to pmem address
 
     void initFilePmemAddr();            // initial the fId2PmAddr
 public:
