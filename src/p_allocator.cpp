@@ -6,34 +6,6 @@ using namespace fp_tree;
 const string catalogPath = DATA_DIR + "p_allocator_catalog";
 const string freePath    = DATA_DIR + "free_list";
 
-struct allocator_catalog {
-    uint64_t maxFileId;
-    uint64_t freeNum;
-    PPointer startLeaf;
-} __attribute__((packed));
-
-struct free_list {
-    PPointer list[LEAF_DEGREE * 100];
-} __attribute__((packed));
-
-struct key_value {
-    Key   key;
-    Value value;
-} __attribute__((packed));
-
-struct leaf {
-    Byte      bitmap[(LEAF_DEGREE * 2 + 7) / 8];
-    PPointer  pNext;
-    Byte      fingerprints[LEAF_DEGREE * 2];
-    key_value kv[LEAF_DEGREE * 2];
-} __attribute__((packed));
-
-struct leaf_group {
-    uint64_t usedNum;
-    Byte     bitmap[LEAF_GROUP_AMOUNT];
-    leaf     leaves[LEAF_GROUP_AMOUNT];
-} __attribute__((packed));
-
 PAllocator *PAllocator::pAllocator = new PAllocator();
 
 PAllocator *PAllocator::getAllocator() {
@@ -64,15 +36,17 @@ PAllocator::PAllocator() {
         pmem_ptr<allocator_catalog> catalog(catalogPath);
         UPDATE_CATALOG(*catalog);
 
-        pmem_ptr<free_list> freelist(freePath);
+        pmem_stream freelist(freePath, sizeof(PPointer) * freeNum);
         freeList.clear();
         for (uint64_t i = 0; i < freeNum; i++) {
-            freeList.push_back(freelist->list[i]);
+            PPointer p;
+            freelist >> p;
+            freeList.push_back(p);
         }
     } else {
         // simply create file
-        pmem_stream(catalogPath, sizeof(allocator_catalog));
-        pmem_stream(freePath, sizeof(free_list));
+        pmem_ptr<allocator_catalog> catalog(catalogPath);
+        pmem_ptr<empty_free_list>   list(freePath);
         maxFileId = 1;
         freeNum   = 0;
         freeList.clear();
@@ -126,7 +100,7 @@ bool PAllocator::getLeaf(PPointer &p, char *&pmem_addr) {
 bool PAllocator::ifLeafUsed(PPointer p) {
     if (ifLeafExist(p)) {
         int pos = (p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf);
-        if (*(fId2PmAddr[p.fileId].get_addr() + 8 + pos) == 1) return true;
+        if (fId2PmAddr[p.fileId]->bitmap[pos] == 1) return true;
     }
     return false;
 }
@@ -134,7 +108,7 @@ bool PAllocator::ifLeafUsed(PPointer p) {
 bool PAllocator::ifLeafFree(PPointer p) {
     if (ifLeafExist(p)) {
         int pos = (p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf);
-        if (*(fId2PmAddr[p.fileId].get_addr() + 8 + pos) == 0) return true;
+        if (fId2PmAddr[p.fileId]->bitmap[pos] == 0) return true;
     }
     return false;
 }
@@ -153,7 +127,7 @@ bool PAllocator::freeLeaf(PPointer p) {
     if (ifLeafUsed(p)) {
         int pos = (p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf);
 
-        *(fId2PmAddr[p.fileId].get_addr() + 8 + pos) = 0;
+        fId2PmAddr[p.fileId]->bitmap[pos] = 0;
         freeList.push_back(p);
         freeNum++;
         return true;
@@ -166,11 +140,10 @@ bool PAllocator::persistCatalog() {
     if (!catalog) return false;
     *catalog = (allocator_catalog){maxFileId, freeNum, startLeaf};
 
-    pmem_ptr<free_list> freelist(freePath);
+    pmem_stream freelist(freePath, sizeof(PPointer) * freeNum);
     if (!freelist) return false;
     for (uint64_t i = 0; i < freeNum; i++) {
-        PPointer p        = freeList[i];
-        freelist->list[i] = p;
+        freelist << freeList[i];
     }
     return true;
 }
@@ -180,7 +153,7 @@ bool PAllocator::newLeafGroup() {
     pmem_ptr<leaf_group> group(DATA_DIR + to_string(maxFileId));
     if (!group) return false;
     for (size_t i = 0; i < LEAF_GROUP_AMOUNT; i++) {
-        freeList.push_back((PPointer){maxFileId, LEAF_GROUP_HEAD + i * sizeof(leaf)});
+        freeList.push_back((PPointer){maxFileId, (uint64_t) & ((leaf_group *)0)->leaves[i]});
     }
     fId2PmAddr.emplace(maxFileId, std::move(group));
     freeNum += LEAF_GROUP_AMOUNT;

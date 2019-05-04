@@ -25,7 +25,7 @@ LEVELDB_INC_DIR = ../leveldb/include
 SRC_DIR = ../src
 INC_DIR = ../include
 OBJ_DIR = ../obj
-BIN_DIR = ../bin
+BIN_DIR = ./bin
 LIB_DIR = ../lib
 
 SOURCE_FILES = $(shell find $(SRC_DIR) -name '*.cpp')
@@ -59,7 +59,7 @@ GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
 
 # House-keeping build targets.
 
-all : $(LIB_DIR) $(GTEST_LIBS) $(BIN_DIR) $(TESTS)
+all : $(LIB_DIR) $(OBJ_DIR) $(GTEST_LIBS) $(BIN_DIR) $(TESTS)
 
 clean :
 	rm -rf $(GTEST_LIBS) $(TESTS) *.o ../data/* $(BIN_DIR) $(LIB_DIR)

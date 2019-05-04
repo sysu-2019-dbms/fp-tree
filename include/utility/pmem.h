@@ -91,6 +91,7 @@ public:
 template <typename T>
 class pmem_ptr : public pmem_stream {
 public:
+    pmem_ptr() : pmem_stream() {}
     explicit pmem_ptr(const string &path) : pmem_stream(path, sizeof(T)) {}
 
     T &operator*() { return *((T *)addr); }
