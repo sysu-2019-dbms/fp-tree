@@ -62,7 +62,7 @@ GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
 all : $(LIB_DIR) $(OBJ_DIR) $(GTEST_LIBS) $(BIN_DIR) $(TESTS)
 
 clean :
-	rm -rf $(GTEST_LIBS) $(TESTS) *.o ../data/* $(BIN_DIR) $(LIB_DIR)
+	rm -rf $(GTEST_LIBS) $(TESTS) *.o ../data/* $(BIN_DIR) $(LIB_DIR) $(OBJ_DIR)
 cleano :
 	rm -rf $(GTEST_LIBS) *.o $(BIN_DIR) $(OBJ_DIR) $(LIB_DIR)
 

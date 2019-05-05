@@ -1,7 +1,3 @@
-#include <libpmem.h>
-#include <algorithm>
-#include <cassert>
-#include <memory>
 #include <string>
 
 namespace fp_tree {
@@ -16,57 +12,24 @@ protected:
     string path;
 
 public:
-    pmem_stream() : addr(nullptr), cur(nullptr) {}
+    pmem_stream();
     pmem_stream(pmem_stream const &) = delete;
     pmem_stream &operator=(pmem_stream const &) = delete;
+    pmem_stream(const string &path, size_t len);
+    ~pmem_stream();
 
-    pmem_stream(const string &path, size_t len) : path(path) {
-        addr = (char *)pmem_map_file(path.c_str(), len, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem);
-        cur  = addr;
-    }
+    pmem_stream(pmem_stream &&b) noexcept;
+    pmem_stream &operator=(pmem_stream &&b);
 
-    pmem_stream(pmem_stream &&b) noexcept : addr(nullptr), cur(nullptr) {
-        swap(b);
-    }
+    void swap(pmem_stream &b) noexcept;
 
-    pmem_stream &operator=(pmem_stream &&b) noexcept {
-        swap(b);
-        return *this;
-    }
+    void flush() const;
 
-    void swap(pmem_stream &b) noexcept {
-        std::swap(path, b.path);
-        std::swap(addr, b.addr);
-        std::swap(cur, b.cur);
-        std::swap(mapped_len, b.mapped_len);
-        std::swap(is_pmem, b.is_pmem);
-    }
+    void close();
 
-    ~pmem_stream() {
-        close();
-    }
+    char *get_addr() const;
 
-    void flush() const {
-        if (!addr) return;
-        if (is_pmem)
-            pmem_persist(addr, mapped_len);
-        else
-            pmem_msync(addr, mapped_len);
-    }
-
-    void close() {
-        if (!addr) return;
-        flush();
-        pmem_unmap(addr, mapped_len);
-    }
-
-    char *get_addr() const {
-        return addr;
-    }
-
-    explicit operator bool() const {
-        return bool(addr);
-    }
+    explicit operator bool() const;
 
     template <typename T>
     T peek() const {

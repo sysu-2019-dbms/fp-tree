@@ -1,10 +1,19 @@
 #include "utility/p_allocator.h"
-#include <iostream>
+#include <fstream>
 using namespace std;
 using namespace fp_tree;
 
 const string catalogPath = DATA_DIR + "p_allocator_catalog";
 const string freePath    = DATA_DIR + "free_list";
+
+bool leaf_group::valid(PPointer p) {
+    return p.offset >= 8 + LEAF_GROUP_AMOUNT &&
+        p.offset < LEAF_GROUP_HEAD + LEAF_GROUP_AMOUNT * sizeof(leaf);
+}
+
+Byte &leaf_group::used(PPointer p) {
+    return bitmap[(p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf)];
+}
 
 PAllocator *PAllocator::pAllocator = new PAllocator();
 
@@ -15,29 +24,17 @@ PAllocator *PAllocator::getAllocator() {
     return PAllocator::pAllocator;
 }
 
-#define UPDATE_CATALOG(catalog)          \
-    do {                                 \
-        maxFileId = (catalog).maxFileId; \
-        freeNum   = (catalog).freeNum;   \
-        startLeaf = (catalog).startLeaf; \
-    } while (0)
-
-/* data storing structure of allocator
-   In the catalog file, the data structure is listed below
-   | maxFileId(8 bytes) | freeNum = m | treeStartLeaf(the PPointer) |
-   In freeList file:
-   | freeList{(fId, offset)1,...(fId, offset)m} |
-*/
 PAllocator::PAllocator() {
     ifstream allocatorCatalog(catalogPath, ios::in | ios::binary);
     ifstream freeListFile(freePath, ios::in | ios::binary);
     // judge if the catalog exists
     if (allocatorCatalog.is_open() && freeListFile.is_open()) {
         pmem_ptr<allocator_catalog> catalog(catalogPath);
-        UPDATE_CATALOG(*catalog);
+        maxFileId = catalog->maxFileId;
+        freeNum   = catalog->freeNum;
+        startLeaf = catalog->startLeaf;
 
         pmem_stream freelist(freePath, sizeof(PPointer) * freeNum);
-        freeList.clear();
         for (uint64_t i = 0; i < freeNum; i++) {
             PPointer p;
             freelist >> p;
@@ -49,17 +46,12 @@ PAllocator::PAllocator() {
         pmem_ptr<empty_free_list>   list(freePath);
         maxFileId = 1;
         freeNum   = 0;
-        freeList.clear();
     }
     this->initFilePmemAddr();
 }
 
 PAllocator::~PAllocator() {
     persistCatalog();
-    fId2PmAddr.clear();
-    freeList.clear();
-    maxFileId              = 1;
-    freeNum                = 0;
     PAllocator::pAllocator = nullptr;
 }
 
@@ -74,8 +66,7 @@ void PAllocator::initFilePmemAddr() {
 
 // get the pmem address of the target PPointer from the map fId2PmAddr
 char *PAllocator::getLeafPmemAddr(PPointer p) {
-    if (fId2PmAddr.count(p.fileId)) return fId2PmAddr[p.fileId].get_addr() + p.offset;
-    return NULL;
+    return fId2PmAddr.count(p.fileId) ? fId2PmAddr[p.fileId].get_addr() + p.offset : nullptr;
 }
 
 // get and use a leaf for the fptree leaf allocation
@@ -91,43 +82,28 @@ bool PAllocator::getLeaf(PPointer &p, char *&pmem_addr) {
     pmem_ptr<leaf_group> group(DATA_DIR + to_string(p.fileId));
     if (!group) return false;
     group->usedNum++;
-    int pos            = (p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf);
-    group->bitmap[pos] = 1;
+    group->used(p) = 1;
 
     return true;
 }
 
 bool PAllocator::ifLeafUsed(PPointer p) {
-    if (ifLeafExist(p)) {
-        int pos = (p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf);
-        if (fId2PmAddr[p.fileId]->bitmap[pos] == 1) return true;
-    }
-    return false;
+    return ifLeafExist(p) && fId2PmAddr[p.fileId]->used(p);
 }
 
 bool PAllocator::ifLeafFree(PPointer p) {
-    if (ifLeafExist(p)) {
-        int pos = (p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf);
-        if (fId2PmAddr[p.fileId]->bitmap[pos] == 0) return true;
-    }
-    return false;
+    return ifLeafExist(p) && !fId2PmAddr[p.fileId]->used(p);
 }
 
 // judge whether the leaf with specific PPointer exists.
 bool PAllocator::ifLeafExist(PPointer p) {
-    if (fId2PmAddr.count(p.fileId) && p.offset >= 8 + LEAF_GROUP_AMOUNT &&
-        p.offset < LEAF_GROUP_HEAD + LEAF_GROUP_AMOUNT * sizeof(leaf))
-        return true;
-    else
-        return false;
+    return fId2PmAddr.count(p.fileId) && fId2PmAddr[p.fileId]->valid(p);
 }
 
 // free and reuse a leaf
 bool PAllocator::freeLeaf(PPointer p) {
     if (ifLeafUsed(p)) {
-        int pos = (p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf);
-
-        fId2PmAddr[p.fileId]->bitmap[pos] = 0;
+        fId2PmAddr[p.fileId]->used(p) = 0;
         freeList.push_back(p);
         freeNum++;
         return true;
