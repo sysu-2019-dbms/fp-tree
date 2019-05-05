@@ -101,14 +101,14 @@ $(OBJ_DIR)/clhash.o : $(SRC_DIR)/clhash.c
 	$(CC) $(CFLAGS) -c $(SRC_DIR)/clhash.c -I $(INC_DIR) -o $@
 
 # utility test
-$(UTILITY_TEST) : $(OBJ_DIR)/utility.o $(OBJ_DIR)/p_allocator.o $(OBJ_DIR)/clhash.o $(OBJ_DIR)/utility_test.o
+$(UTILITY_TEST) : $(OBJ_DIR)/utility.o $(OBJ_DIR)/pmem.o $(OBJ_DIR)/p_allocator.o $(OBJ_DIR)/clhash.o $(OBJ_DIR)/utility_test.o 
 	$(CXX) $(CPPFLAGS) -L$(LIB_DIR) -lgtest -lgtest_main $(CXXFLAGS) $^ -lpmem -o $@
 
 $(OBJ_DIR)/utility_test.o : utility_test.cpp
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -c utility_test.cpp -I$(INC_DIR) -o $@
 
 # fptree test
-$(FPTREE_TEST) : $(OBJ_DIR)/fptree.o $(OBJ_DIR)/utility.o $(OBJ_DIR)/p_allocator.o $(OBJ_DIR)/clhash.o $(OBJ_DIR)/fptree_test.o
+$(FPTREE_TEST) : $(OBJ_DIR)/fptree.o $(OBJ_DIR)/utility.o $(OBJ_DIR)/pmem.o $(OBJ_DIR)/p_allocator.o $(OBJ_DIR)/clhash.o $(OBJ_DIR)/fptree_test.o
 	$(CXX) $(CPPFLAGS) -L$(LIB_DIR) -lgtest -lgtest_main $(CXXFLAGS) $^ -lpmem -o $@
 
 $(OBJ_DIR)/fptree_test.o : fptree_test.cpp

@@ -19,7 +19,7 @@ public:
     ~pmem_stream();
 
     pmem_stream(pmem_stream &&b) noexcept;
-    pmem_stream &operator=(pmem_stream &&b);
+    pmem_stream &operator=(pmem_stream &&b) noexcept;
 
     void swap(pmem_stream &b) noexcept;
 

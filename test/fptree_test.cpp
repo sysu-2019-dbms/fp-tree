@@ -1,6 +1,6 @@
 #include "fptree/fptree.h"
 #include "gtest/gtest.h"
-#include <iostream>
+#include <fstream>
 
 using namespace std;
 
