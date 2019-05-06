@@ -38,6 +38,8 @@ PAllocator::PAllocator() {
     ifstream freeListFile(freePath, ios::in | ios::binary);
     // judge if the catalog exists
     if (allocatorCatalog.is_open() && freeListFile.is_open()) {
+        allocatorCatalog.close();
+        freeListFile.close();
         pmem_ptr<allocator_catalog> catalog(catalogPath);
         maxFileId = catalog->maxFileId;
         freeNum   = catalog->freeNum;

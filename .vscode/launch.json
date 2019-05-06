@@ -23,6 +23,26 @@
                     "ignoreFailures": true
                 }
             ]
+        },
+        {
+            "name": "(gdb) fptree_test",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/test/bin/fptree_test",
+            "args": [],
+            "stopAtEntry": true,
+            "cwd": "${workspaceFolder}",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "miDebuggerPath": "/usr/bin/gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb and add better child debugging",
+                    "text": "-enable-pretty-printing -gdb-set detach-on-fork off",
+                    "ignoreFailures": true
+                }
+            ]
         }
     ]
 }
