@@ -153,6 +153,8 @@ public:
     KeyNode     split();
     Key         findSplitKey();
 
+    Key getMinKey();
+
     void        printNode();
 
     int         findFirstZero();

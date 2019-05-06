@@ -23,6 +23,7 @@ InnerNode::~InnerNode() {
 
 // binary search the first key in the innernode larger than input key
 int InnerNode::findIndex(const Key& k) {
+    if (n == 0) return 0;
     int pos = upper_bound(keys, keys + n - 1, k) - keys;
     return pos;
 }
@@ -34,7 +35,34 @@ int InnerNode::findIndex(const Key& k) {
 // ======================
 // WARNING: can not insert when it has no entry
 void InnerNode::insertNonFull(const Key& k, Node* const& node) {
-    // TODO
+    if (n == 0) {
+        childrens[0] = node;
+        n++;
+        return;
+    }
+    int pos = findIndex(k);
+    if (pos == 0) {
+        memmove(childrens + 1, childrens, sizeof(Node*) * n);
+        childrens[0] = node;
+        memmove(keys + 1, keys, sizeof(Key) * (n - 1));
+        
+        if (childrens[1]->ifLeaf()) {
+            LeafNode *node = (LeafNode *)childrens[1];
+            keys[0] = node->getMinKey();
+        } else {
+            InnerNode *node = (InnerNode *)childrens[1];
+            keys[0] = node->keys[0];
+        }
+    } else if (pos < n - 1) {
+        memmove(childrens + pos + 2, childrens + pos + 1, sizeof(Node*) * (n - pos - 1));
+        childrens[pos + 1] = node;
+        memmove(keys + pos + 1, keys + pos, sizeof(Key) * (n - pos - 1));
+        keys[pos - 1] = k;
+    } else {
+        childrens[n] = node;
+        keys[n - 1] = k;
+    }
+    n++;
 }
 
 // insert func
@@ -45,15 +73,35 @@ KeyNode InnerNode::insert(const Key& k, const Value& v) {
         LeafNode* node = new LeafNode(tree);
         node->insert(k, v);
         childrens[n++] = node;
-        return (KeyNode){k, node};
-    }
-    if (n < 2 * degree + 1) {
-        int pos = findIndex(k);
-        childrens[pos]->insert(k, v);
         return (KeyNode){k, nullptr};
-    } else {
-
     }
+
+    int     pos     = findIndex(k);
+    KeyNode childSplitKey = childrens[pos]->insert(k, v);
+    if (childSplitKey.node) {
+        if (n < 2 * degree + 1) {
+            insertNonFull(childSplitKey.key, childSplitKey.node);
+        } else {
+            KeyNode selfSplitKey = split();
+            InnerNode *splitNode = (InnerNode *) selfSplitKey.node;
+            if (childSplitKey.key < selfSplitKey.key) {
+                insertNonFull(childSplitKey.key, childSplitKey.node);
+            } else {
+                splitNode->insertNonFull(childSplitKey.key, childSplitKey.node);
+            }
+
+            if (this->isRoot) {
+                InnerNode *newRoot = new InnerNode(tree->degree, tree, true);
+                isRoot = false;
+                splitNode->isRoot = false;
+                newRoot->insertNonFull(keys[0], this);
+                newRoot->insertNonFull(splitNode->keys[0], splitNode);
+                tree->root = newRoot;
+            }
+            return selfSplitKey;
+        }
+    }
+    return (KeyNode){k, nullptr};
 }
 
 // ensure that the leaves inserted are ordered
@@ -79,22 +127,14 @@ KeyNode InnerNode::insertLeaf(const KeyNode& leaf) { /*
 }
 
 KeyNode InnerNode::split() {
-    InnerNode* left  = new InnerNode(degree, tree);
     InnerNode* right = new InnerNode(degree, tree);
 
-    right->n = left->n = n / 2;
+    right->n = n = n / 2;
 
-    copy(keys, keys + (n - 1) / 2, left->keys);
-    copy(keys + (n + 1) / 2, keys + (n - 1), right->keys);
-    copy(childrens, childrens + n / 2, left->childrens);
-    copy(childrens + n / 2, childrens + n, right->childrens);
+    copy(keys + n, keys + n + n - 1, right->keys);
+    copy(childrens + n, childrens + n + n, right->childrens);
 
-    n            = 2;
-    keys[0]      = keys[n / 2];
-    childrens[0] = left;
-    childrens[1] = right;
-
-    return KeyNode{keys[0], this};
+    return KeyNode{keys[n - 1], right};
 }
 
 // remove the target entry
@@ -208,7 +248,7 @@ void LeafNode::printNode() {
 // new a empty leaf and set the valuable of the LeafNode
 LeafNode::LeafNode(FPTree* t) : Node(t, true) {
     PAllocator::getAllocator()->getLeaf(pPointer, pmem_addr);
-    pmem   = (leaf *)pmem_addr;
+    pmem   = (leaf*)pmem_addr;
     degree = LEAF_DEGREE;
     n      = 0;
     prev = next = nullptr;
@@ -221,16 +261,18 @@ LeafNode::LeafNode(FPTree* t) : Node(t, true) {
 LeafNode::LeafNode(PPointer pPointer, FPTree* t) : Node(t, true) {
     this->pPointer = pPointer;
     pmem_addr      = PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
-    pmem           = (leaf *)pmem_addr;
+    pmem           = (leaf*)pmem_addr;
     degree         = LEAF_DEGREE;
     n              = 0;
     for (int i = 0; i < sizeof(pmem->bitmap); ++i)
         n += countOneBits(pmem->bitmap[i]);
     prev = next = nullptr;
-    if (pmem->pNext.fileId) 
-        next = new LeafNode(pmem->pNext, t);
-    filePath    = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
-    bitmapSize  = 0;  // TODO
+    if (pmem->pNext.fileId) {
+        next       = new LeafNode(pmem->pNext, t);
+        next->prev = this;
+    }
+    filePath   = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
+    bitmapSize = 0;  // TODO
 }
 
 LeafNode::~LeafNode() {
@@ -258,10 +300,9 @@ void LeafNode::insertNonFull(const Key& k, const Value& v) {
     pmem->kv[pos]           = (key_value){k, v};
     pmem->fingerprints[pos] = keyHash(k);
 
-    get_pmem_ptr().flush();
-    /*    get_pmem_ptr().flush_part(&(pmem->kv[pos]));
+    get_pmem_ptr().flush_part(&(pmem->kv[pos]));
     get_pmem_ptr().flush_part(&(pmem->bitmap[pos / 8]));
-    get_pmem_ptr().flush_part(&(pmem->fingerprints[pos]));*/
+    get_pmem_ptr().flush_part(&(pmem->fingerprints[pos]));
 }
 
 // split the leaf node
@@ -333,6 +374,16 @@ bool LeafNode::update(const Key& k, const Value& v) {
     bool ifUpdate = false;
     // TODO
     return ifUpdate;
+}
+
+Key LeafNode::getMinKey() {
+    Key ans; bool met = false;
+    for (int i = 0; i < n; ++i)
+        if (getBit(i)) {
+            if (!met) ans = getKey(i), met = true;
+            else ans = min(ans, getKey(i));
+        }
+    return ans;
 }
 
 // if the entry can not be found, return the max Value
