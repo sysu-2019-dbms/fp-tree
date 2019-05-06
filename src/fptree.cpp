@@ -222,8 +222,12 @@ LeafNode::LeafNode(PPointer pPointer, FPTree* t) : Node(t, true) {
     pmem_addr      = PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
     pmem           = &leaf_group::get_leaf(pmem_addr, pPointer);
     degree         = LEAF_DEGREE;
-    n              = PAllocator::getAllocator()->getLeafGroup(pPointer)->usedNum;
+    n              = 0;
+    for (int i = 0; i < sizeof(pmem->bitmap); ++i)
+        n += countOneBits(pmem->bitmap[i]);
     prev = next = nullptr;
+    if (pmem->pNext.fileId) 
+        next = new LeafNode(pmem->pNext, t);
     filePath    = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
     bitmapSize  = 0;  // TODO
 }
@@ -253,7 +257,7 @@ void LeafNode::insertNonFull(const Key& k, const Value& v) {
     pmem->kv[pos]           = (key_value){k, v};
     pmem->fingerprints[pos] = keyHash(k);
     get_pmem_ptr().flush();
-/*    get_pmem_ptr().flush_part(&(pmem->kv[pos]));
+    /*    get_pmem_ptr().flush_part(&(pmem->kv[pos]));
     get_pmem_ptr().flush_part(&(pmem->bitmap[pos / 8]));
     get_pmem_ptr().flush_part(&(pmem->fingerprints[pos]));*/
 }
