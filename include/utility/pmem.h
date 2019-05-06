@@ -22,7 +22,7 @@ public:
     pmem_stream &operator=(pmem_stream &&b) noexcept;
 
     void swap(pmem_stream &b) noexcept;
-
+    void flush(void *addr, size_t len) const;
     void flush() const;
 
     void close();
@@ -59,6 +59,11 @@ public:
 
     T &operator*() { return *((T *)addr); }
     T *operator->() { return (T *)addr; }
+
+    template <typename V>
+    void flush_part(V *addr) {
+        flush(addr, sizeof(V));
+    }
 };
 
 }  // namespace fp_tree

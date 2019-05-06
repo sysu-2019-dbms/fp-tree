@@ -6,6 +6,10 @@ using namespace fp_tree;
 const string catalogPath = DATA_DIR + "p_allocator_catalog";
 const string freePath    = DATA_DIR + "free_list";
 
+bool key_value::operator<(const key_value &b) const {
+    return key < b.key;
+}
+
 bool leaf_group::valid(PPointer p) {
     return p.offset >= 8 + LEAF_GROUP_AMOUNT &&
            p.offset < LEAF_GROUP_HEAD + LEAF_GROUP_AMOUNT * sizeof(leaf);
@@ -64,7 +68,7 @@ PAllocator::~PAllocator() {
 void PAllocator::initFilePmemAddr() {
     fId2PmAddr.clear();
     for (uint64_t i = 1; i < maxFileId; i++) {
-        pmem_ptr<leaf_group> pmem(DATA_DIR + to_string(maxFileId));
+        pmem_ptr<leaf_group> pmem(getLeafGroupFilePath(maxFileId));
         fId2PmAddr.emplace(i, std::move(pmem));
     }
 }
@@ -132,7 +136,7 @@ bool PAllocator::persistCatalog() {
 
 // create a new leafgroup, one file per leafgroup
 bool PAllocator::newLeafGroup() {
-    pmem_ptr<leaf_group> group(DATA_DIR + to_string(maxFileId));
+    pmem_ptr<leaf_group> group(getLeafGroupFilePath(maxFileId));
     if (!group) return false;
     for (size_t i = 0; i < LEAF_GROUP_AMOUNT; i++) {
         freeList.push_back((PPointer){maxFileId, (uint64_t) & ((leaf_group *)0)->leaves[i]});
@@ -141,4 +145,12 @@ bool PAllocator::newLeafGroup() {
     freeNum += LEAF_GROUP_AMOUNT;
     maxFileId++;
     return true;
+}
+
+string PAllocator::getLeafGroupFilePath(uint64_t fileId) {
+    return DATA_DIR + to_string(fileId);
+}
+
+pmem_ptr<leaf_group> &PAllocator::getLeafGroup(PPointer p) {
+    return fId2PmAddr[p.fileId];
 }

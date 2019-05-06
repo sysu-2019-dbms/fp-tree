@@ -58,3 +58,15 @@ PPointer getPNext(PPointer p) {
     file.read((char*)&(t_p), sizeof(PPointer));
     return t_p;
 }
+
+void set_bit(Byte bitmap[], int n) {
+    bitmap[n / 8] |= 1 << (n % 8);
+}
+
+void clear_bit(Byte bitmap[], int n) {
+    bitmap[n / 8] &= ~(1 << (n % 8));
+}
+
+int get_bit(Byte bitmap[], int n) {
+    return (bitmap[n / 8] >> (n % 8)) & 1;
+}

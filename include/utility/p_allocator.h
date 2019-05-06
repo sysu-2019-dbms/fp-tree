@@ -19,6 +19,8 @@ struct empty_free_list {
 struct key_value {
     Key   key;
     Value value;
+
+    bool operator<(const key_value &b) const;
 } __attribute__((packed));
 
 struct leaf {
@@ -56,6 +58,9 @@ public:
 
     PAllocator();
     ~PAllocator();
+
+    string getLeafGroupFilePath(uint64_t fileId);
+    fp_tree::pmem_ptr<leaf_group> &getLeafGroup(PPointer p);
 
     char* getLeafPmemAddr(PPointer p);
     bool  getLeaf(PPointer& p, char*& pmem_addr);  // get and use a free leaf

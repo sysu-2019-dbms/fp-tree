@@ -125,10 +125,7 @@ private:
 
     // the pointer below are all pmem address based on pmem_addr
     // need to set the pointer pointed to NVM address
-    Byte*      bitmap;         // bitmap of the KV slots
-    PPointer*  pNext;          // next leafnode
-    Byte*      fingerprints;   // the fingerprint of the keys array
-    KeyValue*  kv;             // the keyValue pairs array
+    leaf *pmem;
 
     // the DRAM relative variables
     int        n;              // amount of entries
@@ -157,9 +154,9 @@ public:
     void        printNode();
 
     int         findFirstZero();
-    int         getBit(const int& idx);
-    Key         getKey(const int& idx);
-    Value       getValue(const int& idx);
+    int         getBit(int idx);
+    Key         getKey(int idx);
+    Value       getValue(int idx);
     PPointer    getPPointer();
 
     // interface with NVM

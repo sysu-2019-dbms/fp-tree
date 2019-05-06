@@ -43,6 +43,12 @@ uint64_t calLeafSize();
 
 uint64_t countOneBits(Byte b);
 
+void set_bit(Byte bitmap[], int n);
+
+void clear_bit(Byte bitmap[], int n);
+
+int get_bit(Byte bitmap[], int n);
+
 Byte keyHash(Key k);
 
 PPointer getPNext(PPointer p);

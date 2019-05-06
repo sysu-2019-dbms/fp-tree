@@ -181,7 +181,7 @@ void LeafNode::printNode() {
     cout << "||";
     for (int i = 0; i < 2 * this->degree; i++) {
         if (this->getBit(i)) {
-            cout << " " << this->kv[i].k << " : " << this->kv[i].v << " |";
+            cout << " " << this->pmem->kv[i].key << " : " << this->pmem->kv[i].value << " |";
         }
     }
     cout << "|"
@@ -191,18 +191,27 @@ void LeafNode::printNode() {
 // new a empty leaf and set the valuable of the LeafNode
 LeafNode::LeafNode(FPTree* t) : Node(t, true) {
     PAllocator::getAllocator()->getLeaf(pPointer, pmem_addr);
-        
-    // TODO
+    pmem = &leaf_group::get_leaf(pmem_addr, pPointer);
+    n = 0;
+    prev = next = nullptr;
+    filePath = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
+    bitmapSize = 0; // TODO
 }
 
 // reload the leaf with the specific Persistent Pointer
 // need to call the PAllocator
-LeafNode::LeafNode(PPointer p, FPTree* t) : Node(t, true) {
-    // TODO
+LeafNode::LeafNode(PPointer pPointer, FPTree* t) : Node(t, true) {
+    this->pPointer = pPointer;
+    pmem_addr = PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
+    pmem = &leaf_group::get_leaf(pmem_addr, pPointer);
+    n = 0;
+    prev = next = nullptr;
+    filePath = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
+    bitmapSize = 0; // TODO
 }
 
 LeafNode::~LeafNode() {
-    // TODO
+    persist();
 }
 
 // insert an entry into the leaf, need to split it if it is full
@@ -218,9 +227,29 @@ void LeafNode::insertNonFull(const Key& k, const Value& v) {
 }
 
 // split the leaf node
+// here, if we call leafNode::split, this node must be full
+// so bitmap must be all one-bit.
 KeyNode* LeafNode::split() {
     KeyNode* newChild = new KeyNode();
-    // TODO
+    persist();
+    LeafNode *newNode = new LeafNode(tree);
+    Key splitKey = findSplitKey();
+    for (int i = 0; i < n / 2; ++i) {
+        set_bit(pmem->bitmap, i);
+        set_bit(newNode->pmem->bitmap, i);
+    }
+    for (int i = n / 2; i < n; ++i) {
+        clear_bit(pmem->bitmap, i);
+        clear_bit(newNode->pmem->bitmap, i);
+    }
+    *newNode->pmem = *pmem;
+    pmem->pNext = newNode->pPointer;
+    persist();
+    newNode->persist();
+
+    next = newNode;
+    newNode->prev = this;
+
     return newChild;
 }
 
@@ -229,23 +258,22 @@ KeyNode* LeafNode::split() {
 // qsort first then find
 Key LeafNode::findSplitKey() {
     Key midKey = 0;
-    // TODO
-    return midKey;
+    nth_element(pmem->kv, pmem->kv + n / 2, pmem->kv + n);
+    return pmem->kv[n / 2].key;
 }
 
 // get the targte bit in bitmap
 // TIPS: bit operation
-int LeafNode::getBit(const int& idx) {
-    // TODO
-    return 0;
+int LeafNode::getBit(int idx) {
+    return get_bit(pmem->bitmap, idx);
 }
 
-Key LeafNode::getKey(const int& idx) {
-    return this->kv[idx].k;
+Key LeafNode::getKey(int idx) {
+    return this->pmem->kv[idx].key;
 }
 
-Value LeafNode::getValue(const int& idx) {
-    return this->kv[idx].v;
+Value LeafNode::getValue(int idx) {
+    return this->pmem->kv[idx].value;
 }
 
 PPointer LeafNode::getPPointer() {
@@ -271,20 +299,23 @@ bool LeafNode::update(const Key& k, const Value& v) {
 
 // if the entry can not be found, return the max Value
 Value LeafNode::find(const Key& k) {
-    // TODO
+    for (int i = 0; i < n; ++i)
+        if (getBit(i) && pmem->kv[i].key == k)
+            return pmem->kv[i].value;
     return MAX_VALUE;
 }
 
 // find the first empty slot
 int LeafNode::findFirstZero() {
-    // TODO
+    for (int i = 0; i < n; ++i)
+        if (!getBit(i)) return i;
     return -1;
 }
 
 // persist the entire leaf
 // use PMDK
 void LeafNode::persist() {
-    // TODO
+    PAllocator::getAllocator()->getLeafGroup(pPointer).flush_part(pmem);
 }
 
 // call by the ~FPTree(), delete the whole tree
