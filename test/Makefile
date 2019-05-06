@@ -34,12 +34,12 @@ OBJS = $(patsubst $(SRC_DIR)%.cpp,$(OBJ_DIR)%.o,$(SOURCE_FILES))
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
 # the compiler doesn't generate warnings in Google Test headers.
-CPPFLAGS += -isystem $(GTEST_DIR)/include
+CPPFLAGS = -isystem $(GTEST_DIR)/include
 
 CFLAGS = -fPIC -std=c99 -O3 -msse4.2 -mpclmul -march=native -funroll-loops -Wstrict-overflow -Wstrict-aliasing -Wall -Wextra -pedantic -Wshadow
 
 # Flags passed to the C++ compiler.
-CXXFLAGS += -g -Wall -Wextra -pthread -std=c++11 -I$(LEVELDB_INC_DIR)
+CXXFLAGS = -g -Wall -Wextra -pthread -std=c++11 -I$(LEVELDB_INC_DIR)
 
 # Google Test libraries
 GTEST_LIBS = $(LIB_DIR)/libgtest.a $(LIB_DIR)/libgtest_main.a

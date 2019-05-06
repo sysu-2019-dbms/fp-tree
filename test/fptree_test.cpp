@@ -33,6 +33,7 @@ TEST(FPTreeTest, SingleInsert) {
     EXPECT_EQ(leaf->find(1), 100);
     EXPECT_EQ(leaf->getPPointer().fileId, 1);
     EXPECT_EQ(leaf->getPPointer().offset, LEAF_GROUP_HEAD + calLeafSize() * (LEAF_GROUP_AMOUNT - 1));
+    EXPECT_EQ(leaf->getBit(0), 1);
     LeafNode* t_leaf = new LeafNode(leaf->getPPointer(), NULL);
     EXPECT_EQ(t_leaf->getBit(0), 1);
     EXPECT_EQ(t_leaf->find(1), 100);

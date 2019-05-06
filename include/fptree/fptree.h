@@ -31,8 +31,8 @@ public:
 
     bool    ifLeaf() { return isLeaf; }
 
-    virtual KeyNode* insert(const Key& k, const Value& v) = 0;
-    virtual KeyNode* split() = 0;
+    virtual KeyNode insert(const Key& k, const Value& v) = 0;
+    virtual KeyNode split() = 0;
     virtual bool remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete) = 0;
     virtual bool update(const Key& k, const Value& v) = 0;
     virtual Value find(const Key& k) = 0;
@@ -62,7 +62,7 @@ typedef struct t_KeyValue {
 /*
 <<struct of the InnerNode>>
 ---------------------------------------------------------
-| nKeys | Keys = {k1,...,kn} | Children = {c1,...,cn+1} |
+| nKeys | Keys = {k1,...,kn-1} | Children = {c1,...,cn} |
 ---------------------------------------------------------
 */
 class InnerNode : public Node {
@@ -70,8 +70,7 @@ private:
     friend class FPTree;
 
     bool   isRoot;     // judge whether the node is root
-    int    nKeys;      // amount of keys
-    int    nChild;     // amount of children
+    int    n;          // amount of children
     Key*   keys;       // max (2 * d + 1) keys
     Node** childrens;  // max (2 * d + 2) node pointers
 
@@ -91,20 +90,20 @@ public:
     InnerNode(const int& d, FPTree* const& tree, bool _ifRoot = false);
     ~InnerNode();
 
-    KeyNode* insert(const Key& k, const Value& v);
+    KeyNode  insert(const Key& k, const Value& v);
     void     insertNonFull(const Key& k, Node* const& node);
-    KeyNode* insertLeaf(const KeyNode& leaf);
+    KeyNode  insertLeaf(const KeyNode& leaf);
     bool     remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete);
     bool     update(const Key& k, const Value& v);
     Value    find(const Key& k);
     
-    KeyNode* split();
+    KeyNode  split();
     void     removeChild(const int& KeyIdx, const int& childIdx);
 
     Node*    getChild(const int& idx);
     Key      getKey(const int& idx);
-    int      getKeyNum() { return this->nKeys; }
-    int      getChildNum() { return this->nChild; }
+    int      getKeyNum() { return this->n - 1; }
+    int      getChildNum() { return this->n; }
     bool     getIsRoot() { return this->isRoot; }
     void     printNode();
 
@@ -128,6 +127,8 @@ private:
     // need to set the pointer pointed to NVM address
     leaf *pmem;
 
+    fp_tree::pmem_ptr<leaf_group> &get_pmem_ptr();
+
     // the DRAM relative variables
     int        n;              // amount of entries
     LeafNode*  prev;           // the address of previous leafnode      
@@ -142,14 +143,14 @@ public:
     LeafNode(PPointer p, FPTree* t);       // read a leaf from NVM/SSD
     ~LeafNode();
 
-    KeyNode*    insert(const Key& k, const Value& v);
+    KeyNode     insert(const Key& k, const Value& v);
     void        insertNonFull(const Key& k, const Value& v);
     bool        remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete);
     bool        update(const Key& k, const Value& v);
     Value       find(const Key& k);
 
     // used by insert()
-    KeyNode*    split();
+    KeyNode     split();
     Key         findSplitKey();
 
     void        printNode();
@@ -166,7 +167,7 @@ public:
 
 class FPTree {
 private:
-    friend class Node;
+    friend class InnerNode;
     InnerNode* root;
     uint64_t   degree;
 
