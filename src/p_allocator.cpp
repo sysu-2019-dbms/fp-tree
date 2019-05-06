@@ -8,11 +8,16 @@ const string freePath    = DATA_DIR + "free_list";
 
 bool leaf_group::valid(PPointer p) {
     return p.offset >= 8 + LEAF_GROUP_AMOUNT &&
-        p.offset < LEAF_GROUP_HEAD + LEAF_GROUP_AMOUNT * sizeof(leaf);
+           p.offset < LEAF_GROUP_HEAD + LEAF_GROUP_AMOUNT * sizeof(leaf);
 }
 
 Byte &leaf_group::used(PPointer p) {
     return bitmap[(p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf)];
+}
+
+leaf &leaf_group::get_leaf(char *pmemaddr, PPointer p) {
+    leaf_group *group = (leaf_group *)pmemaddr;
+    return group->leaves[(p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf)];
 }
 
 PAllocator *PAllocator::pAllocator = new PAllocator();
@@ -79,10 +84,11 @@ bool PAllocator::getLeaf(PPointer &p, char *&pmem_addr) {
     freeList.pop_back();
     freeNum--;
 
-    pmem_ptr<leaf_group> group(DATA_DIR + to_string(p.fileId));
-    if (!group) return false;
+    pmem_ptr<leaf_group> &group = fId2PmAddr[p.fileId];
     group->usedNum++;
     group->used(p) = 1;
+    group.flush();
+    pmem_addr = group.get_addr();
 
     return true;
 }

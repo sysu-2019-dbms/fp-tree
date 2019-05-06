@@ -24,6 +24,7 @@ protected:
     bool    isLeaf;   // judge whether the node is leaf
 
 public:
+    Node(FPTree *tree, bool isLeaf);
     virtual ~Node() {}
 
     FPTree* getTree() { return tree; }
@@ -167,6 +168,7 @@ public:
 
 class FPTree {
 private:
+    friend class Node;
     InnerNode* root;
     uint64_t   degree;
 

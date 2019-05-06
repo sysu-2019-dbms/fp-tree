@@ -35,6 +35,8 @@ struct leaf_group {
 
     bool  valid(PPointer p);
     Byte& used(PPointer p);
+
+    static leaf &get_leaf(char*pmemaddr, PPointer pPointer);
 } __attribute__((packed));
 
 // Use this to allocate or free a leaf node in NVM

@@ -1,21 +1,29 @@
-#include"fptree/fptree.h"
-
+#include <algorithm>
+#include "fptree/fptree.h"
 using namespace std;
+Node::Node(FPTree* tree, bool _isleaf) : tree(tree), isLeaf(_isleaf), degree(tree->degree) {
+}
 
 // Initial the new InnerNode
-InnerNode::InnerNode(const int& d, FPTree* const& t, bool _isRoot) {
-    // TODO
+InnerNode::InnerNode(const int& d, FPTree* const& t, bool _isRoot)
+    : Node(t, false) {
+    isRoot    = _isRoot;
+    nKeys     = 0;
+    nChild    = 0;
+    keys      = new Key[2 * d + 1];
+    childrens = new Node*[2 * d + 2];
 }
 
 // delete the InnerNode
 InnerNode::~InnerNode() {
-    // TODO
+    delete[] keys;
+    delete[] childrens;
 }
 
 // binary search the first key in the innernode larger than input key
 int InnerNode::findIndex(const Key& k) {
-    // TODO
-    return 0;
+    int pos = lower_bound(keys, keys + nKeys, k) - keys;
+    return pos;
 }
 
 // insert the node that is assumed not full
@@ -36,9 +44,11 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
     // 1.insertion to the first leaf(only one leaf)
     if (this->isRoot && this->nKeys == 0) {
         // TODO
+
+        *newChild = (KeyNode){k, nullptr};
         return newChild;
     }
-    
+
     // 2.recursive insertion
     // TODO
     return newChild;
@@ -54,7 +64,7 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
         // TODO
         return newChild;
     }
-    
+
     // recursive insert
     // Tip: please judge whether this InnerNode is full
     // next level is not leaf, just insertLeaf
@@ -68,7 +78,7 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
 
 KeyNode* InnerNode::split() {
     KeyNode* newChild = new KeyNode();
-    // right half entries of old node to the new node, others to the old node. 
+    // right half entries of old node to the new node, others to the old node.
     // TODO
 
     return newChild;
@@ -77,18 +87,18 @@ KeyNode* InnerNode::split() {
 // remove the target entry
 // return TRUE if the children node is deleted after removement.
 // the InnerNode need to be redistributed or merged after deleting one of its children node.
-bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete) {
+bool InnerNode::remove(const Key& k, const int& index, InnerNode* const& parent, bool& ifDelete) {
     bool ifRemove = false;
     // only have one leaf
     // TODO
-    
+
     // recursive remove
     // TODO
     return ifRemove;
 }
 
 // If the leftBro and rightBro exist, the rightBro is prior to be used
-void InnerNode::getBrother(const int& index, InnerNode* const& parent, InnerNode* &leftBro, InnerNode* &rightBro) {
+void InnerNode::getBrother(const int& index, InnerNode* const& parent, InnerNode*& leftBro, InnerNode*& rightBro) {
     // TODO
 }
 
@@ -162,7 +172,8 @@ void InnerNode::printNode() {
     for (int i = 0; i < this->nKeys; i++) {
         cout << " " << this->keys[i] << " |#|";
     }
-    cout << "|" << "    ";
+    cout << "|"
+         << "    ";
 }
 
 // print the LeafNode
@@ -173,17 +184,20 @@ void LeafNode::printNode() {
             cout << " " << this->kv[i].k << " : " << this->kv[i].v << " |";
         }
     }
-    cout << "|" << " ====>> ";
+    cout << "|"
+         << " ====>> ";
 }
 
 // new a empty leaf and set the valuable of the LeafNode
-LeafNode::LeafNode(FPTree* t) {
+LeafNode::LeafNode(FPTree* t) : Node(t, true) {
+    PAllocator::getAllocator()->getLeaf(pPointer, pmem_addr);
+        
     // TODO
 }
 
 // reload the leaf with the specific Persistent Pointer
 // need to call the PAllocator
-LeafNode::LeafNode(PPointer p, FPTree* t) {
+LeafNode::LeafNode(PPointer p, FPTree* t) : Node(t, true) {
     // TODO
 }
 
@@ -241,7 +255,7 @@ PPointer LeafNode::getPPointer() {
 // remove an entry from the leaf
 // if it has no entry after removement return TRUE to indicate outer func to delete this leaf.
 // need to call PAllocator to set this leaf free and reuse it
-bool LeafNode::remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete) {
+bool LeafNode::remove(const Key& k, const int& index, InnerNode* const& parent, bool& ifDelete) {
     bool ifRemove = false;
     // TODO
     return ifRemove;
@@ -287,7 +301,7 @@ void FPTree::recursiveDelete(Node* n) {
 
 FPTree::FPTree(uint64_t t_degree) {
     FPTree* temp = this;
-    this->root = new InnerNode(t_degree, temp, true);
+    this->root   = new InnerNode(t_degree, temp, true);
     this->degree = t_degree;
     bulkLoading();
 }
@@ -314,8 +328,8 @@ void FPTree::insert(Key k, Value v) {
 
 bool FPTree::remove(Key k) {
     if (root != NULL) {
-        bool ifDelete = false;
-        InnerNode* temp = NULL;
+        bool       ifDelete = false;
+        InnerNode* temp     = NULL;
         return root->remove(k, -1, temp, ifDelete);
     }
     return false;
