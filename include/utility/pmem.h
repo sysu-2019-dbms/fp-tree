@@ -60,6 +60,7 @@ public:
     T &operator*() { return *((T *)addr); }
     T *operator->() { return (T *)addr; }
 
+    // Partially flush
     template <typename V>
     void flush_part(V *addr) {
         flush(addr, sizeof(V));

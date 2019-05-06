@@ -68,8 +68,7 @@ PAllocator::~PAllocator() {
 void PAllocator::initFilePmemAddr() {
     fId2PmAddr.clear();
     for (uint64_t i = 1; i < maxFileId; i++) {
-        pmem_ptr<leaf_group> pmem(getLeafGroupFilePath(maxFileId));
-        fId2PmAddr.emplace(i, std::move(pmem));
+        fId2PmAddr.emplace(i, pmem_ptr<leaf_group>(getLeafGroupFilePath(i)));
     }
 }
 
@@ -79,7 +78,7 @@ char *PAllocator::getLeafPmemAddr(PPointer p) {
 }
 
 // get and use a leaf for the fptree leaf allocation
-// return
+// return false if no free leaf is available
 bool PAllocator::getLeaf(PPointer &p, char *&pmem_addr) {
     if (freeNum == 0) {
         if (!newLeafGroup()) return false;
