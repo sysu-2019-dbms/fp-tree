@@ -222,7 +222,7 @@ LeafNode::LeafNode(PPointer pPointer, FPTree* t) : Node(t, true) {
     pmem_addr      = PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
     pmem           = &leaf_group::get_leaf(pmem_addr, pPointer);
     degree         = LEAF_DEGREE;
-    n              = 0;
+    n              = PAllocator::getAllocator()->getLeafGroup(pPointer)->usedNum;
     prev = next = nullptr;
     filePath    = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
     bitmapSize  = 0;  // TODO
@@ -240,6 +240,7 @@ KeyNode LeafNode::insert(const Key& k, const Value& v) {
         newChild = split();
     }
     insertNonFull(k, v);
+    persist();
     return newChild;
 }
 

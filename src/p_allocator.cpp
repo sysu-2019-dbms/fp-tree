@@ -1,5 +1,6 @@
 #include "utility/p_allocator.h"
 #include <fstream>
+#include <iostream>
 using namespace std;
 using namespace fp_tree;
 
@@ -76,7 +77,7 @@ void PAllocator::initFilePmemAddr() {
 
 // get the pmem address of the target PPointer from the map fId2PmAddr
 char *PAllocator::getLeafPmemAddr(PPointer p) {
-    return fId2PmAddr.count(p.fileId) ? fId2PmAddr[p.fileId].get_addr() + p.offset : nullptr;
+    return fId2PmAddr.count(p.fileId) ? fId2PmAddr[p.fileId].get_addr() : nullptr;
 }
 
 // get and use a leaf for the fptree leaf allocation

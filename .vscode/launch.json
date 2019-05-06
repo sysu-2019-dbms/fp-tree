@@ -30,7 +30,7 @@
             "request": "launch",
             "program": "${workspaceFolder}/test/bin/fptree_test",
             "args": [],
-            "stopAtEntry": true,
+            "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
             "environment": [],
             "externalConsole": true,
