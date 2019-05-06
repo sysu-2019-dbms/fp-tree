@@ -20,11 +20,6 @@ Byte &leaf_group::used(PPointer p) {
     return bitmap[(p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf)];
 }
 
-leaf &leaf_group::get_leaf(char *pmemaddr, PPointer p) {
-    leaf_group *group = (leaf_group *)pmemaddr;
-    return group->leaves[(p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf)];
-}
-
 PAllocator *PAllocator::pAllocator = new PAllocator();
 
 PAllocator *PAllocator::getAllocator() {
@@ -77,7 +72,7 @@ void PAllocator::initFilePmemAddr() {
 
 // get the pmem address of the target PPointer from the map fId2PmAddr
 char *PAllocator::getLeafPmemAddr(PPointer p) {
-    return fId2PmAddr.count(p.fileId) ? fId2PmAddr[p.fileId].get_addr() : nullptr;
+    return fId2PmAddr.count(p.fileId) ? fId2PmAddr[p.fileId].get_addr() + p.offset : nullptr;
 }
 
 // get and use a leaf for the fptree leaf allocation
@@ -94,7 +89,7 @@ bool PAllocator::getLeaf(PPointer &p, char *&pmem_addr) {
     group->usedNum++;
     group->used(p) = 1;
     group.flush();
-    pmem_addr = group.get_addr();
+    pmem_addr = group.get_addr() + p.offset;
 
     return true;
 }

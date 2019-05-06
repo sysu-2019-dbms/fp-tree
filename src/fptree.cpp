@@ -52,6 +52,7 @@ KeyNode InnerNode::insert(const Key& k, const Value& v) {
         childrens[pos]->insert(k, v);
         return (KeyNode){k, nullptr};
     } else {
+
     }
 }
 
@@ -207,7 +208,7 @@ void LeafNode::printNode() {
 // new a empty leaf and set the valuable of the LeafNode
 LeafNode::LeafNode(FPTree* t) : Node(t, true) {
     PAllocator::getAllocator()->getLeaf(pPointer, pmem_addr);
-    pmem   = &leaf_group::get_leaf(pmem_addr, pPointer);
+    pmem   = (leaf *)pmem_addr;
     degree = LEAF_DEGREE;
     n      = 0;
     prev = next = nullptr;
@@ -220,7 +221,7 @@ LeafNode::LeafNode(FPTree* t) : Node(t, true) {
 LeafNode::LeafNode(PPointer pPointer, FPTree* t) : Node(t, true) {
     this->pPointer = pPointer;
     pmem_addr      = PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
-    pmem           = &leaf_group::get_leaf(pmem_addr, pPointer);
+    pmem           = (leaf *)pmem_addr;
     degree         = LEAF_DEGREE;
     n              = 0;
     for (int i = 0; i < sizeof(pmem->bitmap); ++i)
@@ -256,6 +257,7 @@ void LeafNode::insertNonFull(const Key& k, const Value& v) {
     set_bit(pmem->bitmap, pos);
     pmem->kv[pos]           = (key_value){k, v};
     pmem->fingerprints[pos] = keyHash(k);
+
     get_pmem_ptr().flush();
     /*    get_pmem_ptr().flush_part(&(pmem->kv[pos]));
     get_pmem_ptr().flush_part(&(pmem->bitmap[pos / 8]));
