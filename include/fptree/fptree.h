@@ -107,6 +107,7 @@ public:
     int      getChildNum() { return this->nChild; }
     bool     getIsRoot() { return this->isRoot; }
     void     printNode();
+
 };
 
 /*
