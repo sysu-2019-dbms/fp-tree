@@ -22,7 +22,7 @@ InnerNode::~InnerNode() {
 
 // binary search the first key in the innernode larger than input key
 int InnerNode::findIndex(const Key& k) {
-    int pos = lower_bound(keys, keys + nKeys, k) - keys;
+    int pos = upper_bound(keys, keys + nKeys, k) - keys;
     return pos;
 }
 
@@ -34,6 +34,7 @@ int InnerNode::findIndex(const Key& k) {
 // WARNING: can not insert when it has no entry
 void InnerNode::insertNonFull(const Key& k, Node* const& node) {
     // TODO
+
 }
 
 // insert func
@@ -48,7 +49,11 @@ KeyNode* InnerNode::insert(const Key& k, const Value& v) {
         *newChild = (KeyNode){k, nullptr};
         return newChild;
     }
-
+    if (nkeys<2*degree+1) {
+        int pos=findIndex(k);
+        if (children[pos]->isLeaf?insertLeaf(children[pos]);
+        else insert(children[pos]);
+    }
     // 2.recursive insertion
     // TODO
     return newChild;
@@ -77,7 +82,20 @@ KeyNode* InnerNode::insertLeaf(const KeyNode& leaf) {
 }
 
 KeyNode* InnerNode::split() {
-    KeyNode* newChild = new KeyNode();
+    KeyNode* newChild = ;
+    InnerNode *newNode = new LeafNode(tree);
+    newNode=
+    for (int i = nkeys / 2; i < nkeys; ++i) {
+        newNode
+    }
+    pmem->pNext = newNode->pPointer;
+    persist();
+    newNode->persist();
+
+    next = newNode;
+    newNode->prev = this;
+
+    return (KeyNode){splitkey,nullptr};
     // right half entries of old node to the new node, others to the old node.
     // TODO
 
@@ -147,14 +165,14 @@ bool InnerNode::update(const Key& k, const Value& v) {
 
 // find the target value with the search key, return MAX_VALUE if it fails.
 Value InnerNode::find(const Key& k) {
-    // TODO
+    int pos=findIndex(k);
+    return children[pos]->find(k);
     return MAX_VALUE;
 }
 
 // get the children node of this InnerNode
 Node* InnerNode::getChild(const int& idx) {
-    // TODO
-    return NULL;
+    return childrens[idx];
 }
 
 // get the key of this InnerNode
@@ -218,31 +236,46 @@ LeafNode::~LeafNode() {
 KeyNode* LeafNode::insert(const Key& k, const Value& v) {
     KeyNode* newChild = NULL;
     // TODO
+    if (n==2*degree) {
+        newchild=split();
+
+    }
+    insertNonFull(k,v);
     return newChild;
 }
 
 // insert into the leaf node that is assumed not full
 void LeafNode::insertNonFull(const Key& k, const Value& v) {
     // TODO
+    n++;
+    int pos=findFirstZero();
+    set_bit(pmem->bitmap,pos);
+    pmem->kv[pos]=(key_value){k,v};
+    pmem->fingerprints[pos]=keyHash(k)；
+    flush_part(&(pmem->kv[pos]));
+    flush_part(&(pmem->bitmap[pos/8]));
+    flush_part(&(pmem->fingerprints[pos]));
 }
 
 // split the leaf node
 // here, if we call leafNode::split, this node must be full
 // so bitmap must be all one-bit.
 KeyNode* LeafNode::split() {
-    KeyNode* newChild = new KeyNode();
     persist();
     LeafNode *newNode = new LeafNode(tree);
     Key splitKey = findSplitKey();
+    
+    
     for (int i = 0; i < n / 2; ++i) {
         set_bit(pmem->bitmap, i);
-        set_bit(newNode->pmem->bitmap, i);
     }
     for (int i = n / 2; i < n; ++i) {
         clear_bit(pmem->bitmap, i);
-        clear_bit(newNode->pmem->bitmap, i);
     }
     *newNode->pmem = *pmem;
+    memcpy(newNode->pmem->kv,node->pmem->kv+n/2,sizeof(key_value)*n/2);
+    newNode->n=n/2;
+    n=n/2;
     pmem->pNext = newNode->pPointer;
     persist();
     newNode->persist();
@@ -250,7 +283,7 @@ KeyNode* LeafNode::split() {
     next = newNode;
     newNode->prev = this;
 
-    return newChild;
+    return new (KeyNode){splitkey,newNode};
 }
 
 // use to find a mediant key and delete entries less then middle
