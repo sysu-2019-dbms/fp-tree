@@ -367,6 +367,12 @@ bool LeafNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete
         ifRemove = true;
         if (prev) {
             prev->next = next;
+            if (next) {
+                prev->pmem->pNext = next->pPointer;
+            } else {
+                prev->pmem->pNext = PPointer{0, 0};
+            }
+            prev->get_pmem_ptr().flush_part(&(prev->pmem->pNext));
         }
         if (next) {
             next->prev = prev;
