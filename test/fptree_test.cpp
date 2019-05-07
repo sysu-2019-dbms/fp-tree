@@ -78,6 +78,7 @@ TEST(FPTreeTest, UpdateTest) {
     tree = NULL;
     tree = new FPTree(2);
     for (int i = 1; i <= LEAF_DEGREE; i+=2) {
+        printf("%d\n",i);
         EXPECT_EQ(tree->find(i), i * 100);
         EXPECT_EQ(tree->update(i, i * 200), true);
     }
