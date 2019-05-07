@@ -123,8 +123,8 @@ bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelet
 
 // If the leftBro and rightBro exist, the rightBro is prior to be used
 void InnerNode::getBrother(int index, InnerNode* parent, InnerNode*& leftBro, InnerNode*& rightBro) {
-    if (index > 0) leftBro = reinterpret_cast<InnerNode*>(parent->childrens[index - 1]);
-    if (index + 1 < parent->n) rightBro = reinterpret_cast<InnerNode*>(parent->childrens[index + 1]);
+    if (index > 0) leftBro = dynamic_cast<InnerNode*>(parent->childrens[index - 1]);
+    if (index + 1 < parent->n) rightBro = dynamic_cast<InnerNode*>(parent->childrens[index + 1]);
 }
 
 // merge this node, its parent and left brother(parent is root)
@@ -270,7 +270,7 @@ KeyNode LeafNode::insert(const Key& k, const Value& v) {
         if (k < newChild.key) {
             insertNonFull(k, v);
         } else {
-            reinterpret_cast<LeafNode*>(newChild.node)->insertNonFull(k, v);
+            dynamic_cast<LeafNode*>(newChild.node)->insertNonFull(k, v);
         }
     } else {
         insertNonFull(k, v);
@@ -412,8 +412,9 @@ void FPTree::recursiveDelete(Node* n) {
     if (n->isLeaf) {
         delete n;
     } else {
-        for (int i = 0; i < ((InnerNode*)n)->n; i++) {
-            recursiveDelete(((InnerNode*)n)->childrens[i]);
+        InnerNode* node = dynamic_cast<InnerNode*>(n);
+        for (int i = 0; i < node->n; i++) {
+            recursiveDelete(node->childrens[i]);
         }
         delete n;
     }
@@ -504,7 +505,7 @@ bool FPTree::bulkLoading() {
         if (lthis == 0) lthis = lupper, lupper = 0;
     }
 
-    this->root         = reinterpret_cast<InnerNode*>(q.front());
+    this->root         = dynamic_cast<InnerNode*>(q.front());
     this->root->isRoot = true;
     return true;
 }
