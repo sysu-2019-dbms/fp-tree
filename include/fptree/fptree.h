@@ -33,7 +33,7 @@ public:
 
     virtual KeyNode insert(const Key& k, const Value& v) = 0;
     virtual KeyNode split() = 0;
-    virtual bool remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete) = 0;
+    virtual bool remove(const Key& k, int index, InnerNode* parent, bool &ifDelete) = 0;
     virtual bool update(const Key& k, const Value& v) = 0;
     virtual Value find(const Key& k) const = 0;
     virtual Key  getMinKey() const = 0;
@@ -77,36 +77,36 @@ private:
 
     int findIndex(const Key& k) const;
 
-    void getBrother(const int& index, InnerNode* const& parent, InnerNode* &leftBro, InnerNode* &rightBro);
-    void redistributeRight(const int& index, InnerNode* const& rightBro, InnerNode* const& parent);
-    void redistributeLeft(const int& index, InnerNode* const& leftBro, InnerNode* const& parent);
+    void getBrother(int index, InnerNode* parent, InnerNode* &leftBro, InnerNode* &rightBro);
+    void redistributeRight(int index, InnerNode* rightBro, InnerNode* parent);
+    void redistributeLeft(int index, InnerNode* leftBro, InnerNode* parent);
 
-    void mergeParentRight(InnerNode* const& parent, InnerNode* const& rightBro);
-    void mergeParentLeft(InnerNode* const& parent, InnerNode* const& leftBro);
+    void mergeParentRight(InnerNode* parent, InnerNode* rightBro);
+    void mergeParentLeft(InnerNode* parent, InnerNode* leftBro);
 
-    void mergeLeft(InnerNode* const& LeftBro, const Key& k);
-    void mergeRight(InnerNode* const& rightBro, const Key& k);
+    void mergeLeft(InnerNode* LeftBro, const Key& k);
+    void mergeRight(InnerNode* rightBro, const Key& k);
 public:
-    InnerNode(const int& d, FPTree* const& tree, bool _ifRoot = false);
+    InnerNode(int d, FPTree* tree, bool _ifRoot = false);
     ~InnerNode();
 
-    KeyNode  insert(const Key& k, const Value& v);
-    void     insertNonFull(const Key& k, Node* const& node);
+    KeyNode  insert(const Key& k, const Value& v) override;
+    void     insertNonFull(const Key& k, Node* node);
     KeyNode  insertLeaf(const KeyNode& leaf);
-    bool     remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete);
-    bool     update(const Key& k, const Value& v);
-    Value    find(const Key& k) const;
-    Key      getMinKey() const;
+    bool     remove(const Key& k, int index, InnerNode* parent, bool &ifDelete) override;
+    bool     update(const Key& k, const Value& v) override;
+    Value    find(const Key& k) const override;
+    Key      getMinKey() const override;
     
-    KeyNode  split();
-    void     removeChild(const int& KeyIdx, const int& childIdx);
+    KeyNode  split() override;
+    void     removeChild(int KeyIdx, int childIdx);
 
-    Node*    getChild(const int& idx);
-    Key      getKey(const int& idx);
+    Node*    getChild(int idx);
+    Key      getKey(int idx);
     int      getKeyNum() const;
     int      getChildNum() const;
     bool     getIsRoot() const;
-    void     printNode() const;
+    void     printNode() const override;
 
 };
 
@@ -144,19 +144,20 @@ public:
     LeafNode(PPointer p, FPTree* t);       // read a leaf from NVM/SSD
     ~LeafNode();
 
-    KeyNode     insert(const Key& k, const Value& v);
+    KeyNode     insert(const Key& k, const Value& v) override;
     void        insertNonFull(const Key& k, const Value& v);
-    bool        remove(const Key& k, const int& index, InnerNode* const& parent, bool &ifDelete);
-    bool        update(const Key& k, const Value& v);
-    Value       find(const Key& k) const;
-    Key         getMinKey() const;
+    bool        remove(const Key& k, int index, InnerNode* parent, bool &ifDelete) override;
+    bool        update(const Key& k, const Value& v) override;
+    Value       find(const Key& k) const override;
+    int         findIndex(const Key& k) const;
+    Key         getMinKey() const override;
 
     // used by insert()
-    KeyNode     split();
+    KeyNode     split() override;
     Key         findSplitKey() const;
 
 
-    void        printNode() const;
+    void        printNode() const override;
 
     int         findFirstZero() const;
     int         getBit(int idx) const;
