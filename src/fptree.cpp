@@ -470,7 +470,19 @@ Value FPTree::find(Key k) {
 // call the InnerNode and LeafNode print func to print the whole tree
 // TIPS: use Queue
 void FPTree::printTree() {
-    // TODO
+    queue<Node*> q;
+    q.push(root);
+    while (!q.empty()) {
+        Node* cur = q.front();
+        q.pop();
+        cur->printNode();
+        if (!cur->isLeaf) {
+            InnerNode* node = dynamic_cast<InnerNode*>(cur);
+            for (int i = 0; i < node->n; ++i) {
+                q.push(node->childrens[i]);
+            }
+        }
+    }
 }
 
 // bulkLoading the leaf files and reload the tree
