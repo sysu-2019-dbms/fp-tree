@@ -117,9 +117,13 @@ KeyNode InnerNode::split() {
 // return TRUE if the children node is deleted after removement.
 // the InnerNode need to be redistributed or merged after deleting one of its children node.
 bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete) {
+    int pos = findIndex(k);
+    if (pos == 0) return false;
     bool ifRemove = false;
-    // only have one leaf
-    // TODO
+    childrens[pos - 1]->remove(k, pos - 1, this, ifRemove);
+    if (ifRemove) {
+
+    }
 
     // recursive remove
     // TODO
@@ -181,6 +185,7 @@ bool InnerNode::update(const Key& k, const Value& v) {
 // find the target value with the search key, return MAX_VALUE if it fails.
 Value InnerNode::find(const Key& k) const {
     int pos = findIndex(k) - 1;
+    if (pos < 0) return MAX_VALUE;
     return childrens[pos]->find(k);
 }
 
@@ -361,14 +366,12 @@ PPointer LeafNode::getPPointer() const {
 // if it has no entry after removement return TRUE to indicate outer func to delete this leaf.
 // need to call PAllocator to set this leaf free and reuse it
 bool LeafNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete) {
-    bool ifRemove = false;
     // TODO
     --n;
     int idx = findIndex(k);
-    assert(idx != -1);
+    if (idx == -1) return false;
     clear_bit(pmem->bitmap, idx);
     if (n == 0) {
-        ifRemove = true;
         if (prev) {
             prev->next = next;
             if (next) {
@@ -382,11 +385,11 @@ bool LeafNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete
             next->prev = prev;
         }
         PAllocator::getAllocator()->freeLeaf(pPointer);
+        return true;
     } else {
         get_pmem_ptr().flush_part(&(pmem->bitmap[idx / 8]));
+        return false;
     }
-
-    return ifRemove;
 }
 
 // update the target entry
