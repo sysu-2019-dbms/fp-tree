@@ -196,7 +196,33 @@ void InnerNode::removeChild(const int& keyIdx, const int& childIdx) {
 // update the target entry, return true if the update succeed.
 bool InnerNode::update(const Key& k, const Value& v) {
     // TODO
-    return false;
+    int pos = findIndex(k);
+
+    Node* node = childrens[pos];
+    if(!node->ifLeaf()){
+    	return node->update(k, v);
+    }
+
+    LeafNode* lfnode = dynamic_cast<LeafNode*>(node);
+    int slot = lfnode->findFirstZero();
+    lfnode->pmem->kv[slot]           = (key_value){k, v};
+    lfnode->pmem->fingerprints[slot] = keyHash(k);
+
+    lfnode->get_pmem_ptr().flush_part(&(lfnode->pmem->kv[slot]));
+    lfnode->get_pmem_ptr().flush_part(&(lfnode->pmem->fingerprints[slot]));    
+
+    int maxn = sizeof(lfnode->pmem->bitmap);
+    Byte tmpBitmap[maxn];
+    memcpy(tmpBitmap,lfnode->pmem->bitmap,sizeof(lfnode->pmem->bitmap)); 
+    
+    //²»ÖªµÀprevslot??
+    int prevslot;
+    clear_bit(lfnode->pmem->bitmap, prevslot); 
+    set_bit(lfnode->pmem->bitmap, slot);
+    memcpy(lfnode->pmem->bitmap,tmpBitmap,sizeof(lfnode->pmem->bitmap)); 
+    lfnode->get_pmem_ptr().flush_part(&(lfnode->pmem->bitmap));
+
+    return true;
 }
 
 // find the target value with the search key, return MAX_VALUE if it fails.
