@@ -1,5 +1,6 @@
 #include "fptree/fptree.h"
 #include <algorithm>
+#include <cassert>
 using namespace std;
 using namespace fp_tree;
 Node::Node(FPTree* tree, bool isLeaf) : tree(tree), isLeaf(isLeaf) {
@@ -355,6 +356,17 @@ PPointer LeafNode::getPPointer() const {
 bool LeafNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete) {
     bool ifRemove = false;
     // TODO
+    --n;
+    int idx = findIndex(k);
+    assert(idx != -1);
+    clear_bit(pmem->bitmap, idx);
+    if (n == 0) {
+        ifRemove = true;
+        PAllocator::getAllocator()->freeLeaf(pPointer);
+    } else {
+        get_pmem_ptr().flush_part(&(pmem->bitmap[idx / 8]));
+    }
+    
     return ifRemove;
 }
 
@@ -370,7 +382,7 @@ bool LeafNode::update(const Key& k, const Value& v) {
 
 int LeafNode::findIndex(const Key& k) const {
     for (int i = 0; i < n; ++i)
-        if (getBit(i) && pmem->kv[i].key == k)
+        if (getBit(i) && pmem->fingerprints[i] == keyHash(k) && pmem->kv[i].key == k)
             return i;
     return -1;
 }
