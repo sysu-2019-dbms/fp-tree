@@ -23,6 +23,7 @@ TEST(FPTreeTest, ReadLeaf) {
 }
 
 TEST(FPTreeTest, SingleInsert) {
+    removeFile();
     FPTree* tree = new FPTree(2);
     tree->insert(1, 100);
     LeafNode* leaf = (LeafNode*)(tree->getRoot()->getChild(0));
@@ -41,6 +42,7 @@ TEST(FPTreeTest, SingleInsert) {
 }
 
 TEST(FPTreeTest, InsertOneLeaf) {
+    removeFile();
     LeafNode* l1 = new LeafNode(NULL);
     for (int i = 1; i <= LEAF_DEGREE; i++) {
         // TODO: error, the insertion did not persist
@@ -70,6 +72,7 @@ TEST(FPTreeTest, InsertOneLeaf) {
 }
 
 TEST(FPTreeTest, UpdateTest) {
+    removeFile();
     FPTree *tree = new FPTree(2);
     for (int i = 1; i <= LEAF_DEGREE; i++) {
         tree->insert(i, i * 100);
@@ -84,7 +87,7 @@ TEST(FPTreeTest, UpdateTest) {
     delete tree;
     tree = NULL;
     tree = new FPTree(2);
-    for (int i = 1; i <= LEAF_DEGREE; i++) {
+    for (int i = 1; i <= LEAF_DEGREE; i+=2) {
         EXPECT_EQ(tree->find(i), i * 200);
     }
     delete tree;
@@ -93,6 +96,7 @@ TEST(FPTreeTest, UpdateTest) {
 }
 
 TEST(FPTreeTest, BulkLoadingTwoLeaf) {
+    removeFile();
 
     PAllocator* pa = PAllocator::getAllocator();
 
@@ -116,6 +120,7 @@ TEST(FPTreeTest, BulkLoadingTwoLeaf) {
 }
 
 TEST(FPTreeTest, PersistLeaf) {
+    removeFile();
     LeafNode* leaf = new LeafNode(NULL);
     leaf->insertNonFull(1, 100);
     leaf->insertNonFull(2, 200);
@@ -132,6 +137,7 @@ TEST(FPTreeTest, PersistLeaf) {
 }
 
 TEST(FPTreeTest, BulkLoadingOneLeafGroup) {
+    removeFile();
     FPTree *tree = new FPTree(32);
     for (int i = 1; i < LEAF_DEGREE * 10; i++) {
         tree->insert(i, i * 10);
@@ -147,6 +153,7 @@ TEST(FPTreeTest, BulkLoadingOneLeafGroup) {
 }
 
 TEST(FPTreeTest, RemoveOneEntry) {
+    removeFile();
     FPTree* tree = new FPTree(4);
     for (int i = 1; i < 10; i++) {
         tree->insert(i, i * 10);
@@ -163,6 +170,7 @@ TEST(FPTreeTest, RemoveOneEntry) {
 }
 
 TEST(FPTreeTest, RemoveMultiplyEntries) {
+    removeFile();
     FPTree* tree = new FPTree(2);
     for (int i = 1; i <= LEAF_DEGREE * 2 * 6; i++) {
         tree->insert(i, i * 10);
@@ -204,6 +212,7 @@ TEST(FPTreeTest, RemoveMultiplyEntries) {
 }
 
 TEST(InneNodeTest, RedistributeRightTest) {
+    removeFile();
     FPTree* tree = new FPTree(2);
     for (int i = 1; i <= LEAF_DEGREE * (3 * 4 + 5); i++) {
         tree->insert(i, i);
@@ -221,6 +230,7 @@ TEST(InneNodeTest, RedistributeRightTest) {
 }
 
 TEST(InnerNodeTest, MergeTest) {
+    removeFile();
     FPTree* tree = new FPTree(2);
     for (int i = 1; i <= LEAF_DEGREE * (3 * 5); i++) {
         tree->insert(i, i);

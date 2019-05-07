@@ -53,6 +53,7 @@ PAllocator::PAllocator() {
         pmem_ptr<empty_free_list>   list(freePath);
         maxFileId = 1;
         freeNum   = 0;
+        startLeaf.fileId = 0;
     }
     this->initFilePmemAddr();
 }
@@ -90,6 +91,12 @@ bool PAllocator::getLeaf(PPointer &p, char *&pmem_addr) {
     group->used(p) = 1;
     group.flush();
     pmem_addr = group.get_addr() + p.offset;
+
+    if (!startLeaf.fileId) {
+        startLeaf = p;
+    }
+
+    persistCatalog();
 
     return true;
 }
