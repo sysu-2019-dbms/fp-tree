@@ -1,5 +1,6 @@
 #include "fptree/fptree.h"
 #include <algorithm>
+#include <cassert>
 using namespace std;
 using namespace fp_tree;
 Node::Node(FPTree* tree, bool isLeaf) : tree(tree), isLeaf(isLeaf) {
@@ -53,11 +54,11 @@ KeyNode InnerNode::insert(const Key& k, const Value& v) {
         return (KeyNode){k, nullptr};
     }
 
-    int     pos           = findIndex(k);
+    int     pos = findIndex(k);
     KeyNode childSplitKey;
     if (pos == 0) {
         childSplitKey = childrens[0]->insert(k, v);
-        keys[0] = childrens[0]->getMinKey();
+        keys[0]       = childrens[0]->getMinKey();
     } else {
         childSplitKey = childrens[pos - 1]->insert(k, v);
     }
@@ -91,7 +92,7 @@ KeyNode InnerNode::insert(const Key& k, const Value& v) {
 // used by the bulkLoading func
 // inserted data: | minKey of leaf | LeafNode* |
 KeyNode InnerNode::insertLeaf(const KeyNode& leaf) {
-    keys[n] = leaf.key;
+    keys[n]        = leaf.key;
     childrens[n++] = leaf.node;
     return leaf;
 }
@@ -312,7 +313,8 @@ KeyNode LeafNode::split() {
         set_bit(newNode->pmem->bitmap, i);
 
     copy(pmem->kv + n, pmem->kv + n + newNode->n, newNode->pmem->kv);
-    pmem->pNext    = newNode->pPointer;
+    copy(pmem->fingerprints + n, pmem->fingerprints + n + newNode->n, newNode->pmem->fingerprints);
+    pmem->pNext = newNode->pPointer;
     persist();
     newNode->persist();
 
@@ -326,8 +328,10 @@ KeyNode LeafNode::split() {
 // called by the split func to generate new leaf-node
 // qsort first then find
 Key LeafNode::findSplitKey() const {
-    Key midKey = 0;
     nth_element(pmem->kv, pmem->kv + (n + 1) / 2, pmem->kv + n);
+    transform(pmem->kv, pmem->kv + n, pmem->fingerprints, [](key_value const& kv) {
+        return keyHash(kv.key);
+    });
     return pmem->kv[(n + 1) / 2].key;
 }
 
@@ -355,6 +359,23 @@ PPointer LeafNode::getPPointer() const {
 bool LeafNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete) {
     bool ifRemove = false;
     // TODO
+    --n;
+    int idx = findIndex(k);
+    assert(idx != -1);
+    clear_bit(pmem->bitmap, idx);
+    if (n == 0) {
+        ifRemove = true;
+        if (prev) {
+            prev->next = next;
+        }
+        if (next) {
+            next->prev = prev;
+        }
+        PAllocator::getAllocator()->freeLeaf(pPointer);
+    } else {
+        get_pmem_ptr().flush_part(&(pmem->bitmap[idx / 8]));
+    }
+
     return ifRemove;
 }
 
@@ -370,7 +391,7 @@ bool LeafNode::update(const Key& k, const Value& v) {
 
 int LeafNode::findIndex(const Key& k) const {
     for (int i = 0; i < n; ++i)
-        if (getBit(i) && pmem->kv[i].key == k)
+        if (getBit(i) && pmem->fingerprints[i] == keyHash(k) && pmem->kv[i].key == k)
             return i;
     return -1;
 }
