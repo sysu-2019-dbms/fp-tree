@@ -11,9 +11,13 @@ bool key_value::operator<(const key_value &b) const {
     return key < b.key;
 }
 
-bool leaf_group::valid(PPointer p) {
+bool leaf_group::valid(PPointer p) const {
     return p.offset >= 8 + LEAF_GROUP_AMOUNT &&
            p.offset < LEAF_GROUP_HEAD + LEAF_GROUP_AMOUNT * sizeof(leaf);
+}
+
+const Byte &leaf_group::used(PPointer p) const {
+    return bitmap[(p.offset - 8 - LEAF_GROUP_AMOUNT) / sizeof(leaf)];
 }
 
 Byte &leaf_group::used(PPointer p) {
@@ -51,8 +55,8 @@ PAllocator::PAllocator() {
         // simply create file
         pmem_ptr<allocator_catalog> catalog(catalogPath);
         pmem_ptr<empty_free_list>   list(freePath);
-        maxFileId = 1;
-        freeNum   = 0;
+        maxFileId        = 1;
+        freeNum          = 0;
         startLeaf.fileId = 0;
     }
     this->initFilePmemAddr();
@@ -72,8 +76,8 @@ void PAllocator::initFilePmemAddr() {
 }
 
 // get the pmem address of the target PPointer from the map fId2PmAddr
-char *PAllocator::getLeafPmemAddr(PPointer p) {
-    return fId2PmAddr.count(p.fileId) ? fId2PmAddr[p.fileId].get_addr() + p.offset : nullptr;
+leaf *PAllocator::getLeafPmemAddr(PPointer p) const {
+    return fId2PmAddr.count(p.fileId) ? fId2PmAddr.at(p.fileId).get_addr() + p.offset : nullptr;
 }
 
 // get and use a leaf for the fptree leaf allocation
@@ -101,17 +105,17 @@ bool PAllocator::getLeaf(PPointer &p, char *&pmem_addr) {
     return true;
 }
 
-bool PAllocator::ifLeafUsed(PPointer p) {
-    return ifLeafExist(p) && fId2PmAddr[p.fileId]->used(p);
+bool PAllocator::ifLeafUsed(PPointer p) const {
+    return ifLeafExist(p) && fId2PmAddr.at(p.fileId)->used(p);
 }
 
-bool PAllocator::ifLeafFree(PPointer p) {
-    return ifLeafExist(p) && !fId2PmAddr[p.fileId]->used(p);
+bool PAllocator::ifLeafFree(PPointer p) const {
+    return ifLeafExist(p) && !fId2PmAddr.at(p.fileId)->used(p);
 }
 
 // judge whether the leaf with specific PPointer exists.
-bool PAllocator::ifLeafExist(PPointer p) {
-    return fId2PmAddr.count(p.fileId) && fId2PmAddr[p.fileId]->valid(p);
+bool PAllocator::ifLeafExist(PPointer p) const {
+    return fId2PmAddr.count(p.fileId) && fId2PmAddr.at(p.fileId)->valid(p);
 }
 
 // free and reuse a leaf
@@ -151,10 +155,14 @@ bool PAllocator::newLeafGroup() {
     return true;
 }
 
-string PAllocator::getLeafGroupFilePath(uint64_t fileId) {
+string PAllocator::getLeafGroupFilePath(uint64_t fileId) const {
     return DATA_DIR + to_string(fileId);
 }
 
 pmem_ptr<leaf_group> &PAllocator::getLeafGroup(PPointer p) {
     return fId2PmAddr[p.fileId];
 }
+
+PPointer PAllocator::getStartPointer() const { return this->startLeaf; }
+uint64_t PAllocator::getMaxFileId() const { return this->maxFileId; }
+uint64_t PAllocator::getFreeNum() const { return this->freeNum; }

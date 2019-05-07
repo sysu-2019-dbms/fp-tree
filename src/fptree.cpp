@@ -6,6 +6,10 @@ using namespace fp_tree;
 Node::Node(FPTree* tree, bool isLeaf) : tree(tree), isLeaf(isLeaf) {
 }
 
+FPTree* Node::getTree() const { return tree; }
+
+bool Node::ifLeaf() const { return isLeaf; }
+
 // Initial the new InnerNode
 InnerNode::InnerNode(int d, FPTree* t, bool _isRoot)
     : Node(t, false) {
@@ -243,8 +247,7 @@ LeafNode::LeafNode(FPTree* t) : Node(t, true) {
 // need to call the PAllocator
 LeafNode::LeafNode(PPointer pPointer, FPTree* t) : Node(t, true) {
     this->pPointer = pPointer;
-    pmem_addr      = PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
-    pmem           = (leaf*)pmem_addr;
+    pmem           = (leaf*)PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
     degree         = LEAF_DEGREE;
     n              = 0;
     for (int i = 0; i < sizeof(pmem->bitmap); ++i)
@@ -515,12 +518,12 @@ void FPTree::printTree() {
 // bulkLoading the leaf files and reload the tree
 // need to traverse leaves chain
 // if no tree is reloaded, return FALSE
-// need to call the PALlocator
+// need to call the PAllocator
 bool FPTree::bulkLoading() {
     PPointer start = PAllocator::getAllocator()->getStartPointer();
     if (start.fileId == 0) {
         this->root = new InnerNode(degree, this, true);
-        return true;
+        return false;
     }
     LeafNode*    startLeaf = new LeafNode(start, this);
     queue<Node*> q;

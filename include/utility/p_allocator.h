@@ -20,7 +20,7 @@ struct key_value {
     Key   key;
     Value value;
 
-    bool operator<(const key_value &b) const;
+    bool operator<(const key_value& b) const;
 } __attribute__((packed));
 
 struct leaf {
@@ -35,8 +35,9 @@ struct leaf_group {
     Byte     bitmap[LEAF_GROUP_AMOUNT];
     leaf     leaves[LEAF_GROUP_AMOUNT];
 
-    bool  valid(PPointer p);
-    Byte& used(PPointer p);
+    bool        valid(PPointer p) const;
+    Byte const& used(PPointer p) const;
+    Byte&       used(PPointer p);
 } __attribute__((packed));
 
 // Use this to allocate or free a leaf node in NVM
@@ -57,22 +58,22 @@ public:
     PAllocator();
     ~PAllocator();
 
-    string getLeafGroupFilePath(uint64_t fileId);
-    fp_tree::pmem_ptr<leaf_group> &getLeafGroup(PPointer p);
+    string                         getLeafGroupFilePath(uint64_t fileId) const;
+    fp_tree::pmem_ptr<leaf_group>& getLeafGroup(PPointer p);
 
-    char* getLeafPmemAddr(PPointer p);
+    leaf* getLeafPmemAddr(PPointer p) const;       // Get the persistent memory address related to the PPointer.
     bool  getLeaf(PPointer& p, char*& pmem_addr);  // get and use a free leaf
     bool  freeLeaf(PPointer p);                    // free the used leaf
     bool  newLeafGroup();                          // allocate a new group of leaves
-    bool  ifLeafUsed(PPointer p);                  // judge whether the leaf is used
-    bool  ifLeafFree(PPointer p);                  // judge whether the leaf is free
-    bool  ifLeafExist(PPointer p);                 // judge whether the leaf exists
+    bool  ifLeafUsed(PPointer p) const;            // judge whether the leaf is used
+    bool  ifLeafFree(PPointer p) const;            // judge whether the leaf is free
+    bool  ifLeafExist(PPointer p) const;           // judge whether the leaf exists
 
     bool persistCatalog();  // persist the catalog file in NVM/SSD
 
-    PPointer getUsedLeaf(int idx);
-    PPointer getFreeLeaf(int idx);
-    PPointer getStartPointer() { return this->startLeaf; }
-    uint64_t getMaxFileId() { return this->maxFileId; }
-    uint64_t getFreeNum() { return this->freeNum; }
+    PPointer getUsedLeaf(int idx) const;
+    PPointer getFreeLeaf(int idx) const;
+    PPointer getStartPointer() const;
+    uint64_t getMaxFileId() const;
+    uint64_t getFreeNum() const;
 };
