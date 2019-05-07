@@ -77,7 +77,7 @@ void PAllocator::initFilePmemAddr() {
 
 // get the pmem address of the target PPointer from the map fId2PmAddr
 leaf *PAllocator::getLeafPmemAddr(PPointer p) const {
-    return fId2PmAddr.count(p.fileId) ? fId2PmAddr.at(p.fileId).get_addr() + p.offset : nullptr;
+    return fId2PmAddr.count(p.fileId) ? reinterpret_cast<leaf *>(fId2PmAddr.at(p.fileId).get_addr() + p.offset) : nullptr;
 }
 
 // get and use a leaf for the fptree leaf allocation

@@ -57,8 +57,8 @@ public:
     pmem_ptr() : pmem_stream() {}
     explicit pmem_ptr(const string &path) : pmem_stream(path, sizeof(T)) {}
 
-    T &operator*() { return *((T *)addr); }
-    T *operator->() { return (T *)addr; }
+    T &operator*() const { return *((T *)addr); }
+    T *operator->() const { return (T *)addr; }
 
     // Partially flush
     template <typename V>

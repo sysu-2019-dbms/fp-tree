@@ -234,8 +234,9 @@ void LeafNode::printNode() const {
 
 // new a empty leaf and set the valuable of the LeafNode
 LeafNode::LeafNode(FPTree* t) : Node(t, true) {
-    PAllocator::getAllocator()->getLeaf(pPointer, pmem_addr);
-    pmem   = (leaf*)pmem_addr;
+    char *pmemaddr;
+    PAllocator::getAllocator()->getLeaf(pPointer, pmemaddr);
+    pmem = reinterpret_cast<leaf *>(pmemaddr);
     degree = LEAF_DEGREE;
     n      = 0;
     prev = next = nullptr;
