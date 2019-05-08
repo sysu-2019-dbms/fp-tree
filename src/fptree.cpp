@@ -133,10 +133,13 @@ bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelet
 
             if (parent->isRoot) {
                 // Case 6: the parent is root
-                if (leftBro)
+                if (leftBro) {
                     mergeParentLeft(parent, leftBro);
-                else if (rightBro)
+                    ifDelete = true;
+                } else if (rightBro) {
                     mergeParentRight(parent, rightBro);
+                    ifDelete = true;
+                }
                 return ifRemove;
             }
 
@@ -144,22 +147,26 @@ bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelet
                 // Case 2: the right brother has enough elements
                 //         for redistribution
                 redistributeRight(index, rightBro, parent);
+                ifDelete = false;
                 return ifRemove;
 
             } else if (leftBro && leftBro->n > degree + 1) {
                 // Case 3: the left brother has enough elements
                 //         for redistribution
                 redistributeLeft(index, rightBro, parent);
+                ifDelete = false;
                 return ifRemove;
             }
 
             if (rightBro) {
                 // Case 4: the right brother has to merge with this node
                 mergeRight(rightBro, k);
+                ifDelete = true;
                 return ifRemove;
             } else if (leftBro) {
                 // Case 5: the left brother has to merge with this node
                 mergeLeft(leftBro, k);
+                ifDelete = true;
                 return ifRemove;
             }
 
@@ -167,6 +174,7 @@ bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelet
         }
 
         // Case 1: The tree still satisfies the constraints
+        ifDelete = false;
         return ifRemove;
     }
 
@@ -225,7 +233,7 @@ void InnerNode::redistributeRight(int index, InnerNode* rightBro, InnerNode* par
     ++this->n;
 
     for (int i = 0; i < rightBro->n; ++i) {
-        rightBro->keys[i] = rightBro->keys[i + 1];
+        rightBro->keys[i]      = rightBro->keys[i + 1];
         rightBro->childrens[i] = rightBro->childrens[i + 1];
     }
 
@@ -233,14 +241,61 @@ void InnerNode::redistributeRight(int index, InnerNode* rightBro, InnerNode* par
     parent->keys[index + 1] = rightBro->getMinKey();
 }
 
+static void _merge(InnerNode* a, InnerNode* b, int na, int nb, Node** mergedChildrens, Key* mergedKeys) {
+    int i = 0, j = 0;
+    while (i < na && j < nb) {
+        if (a->getKey(i) < b->getKey(j)) {
+            *(mergedChildrens++) = a->getChild(i);
+            *(mergedKeys++)      = a->getKey(i);
+            ++i;
+        } else {
+            *(mergedChildrens++) = b->getChild(j);
+            *(mergedKeys++)      = b->getKey(j);
+            ++j;
+        }
+    }
+
+    while (i < na) {
+        *(mergedChildrens++) = a->getChild(i);
+        *(mergedKeys++)      = a->getKey(i);
+        ++i;
+    }
+
+    while (j < nb) {
+        *(mergedChildrens++) = b->getChild(j);
+        *(mergedKeys++)      = b->getKey(j);
+        ++j;
+    }
+}
+
 // merge all entries to its left bro, delete this node after merging.
 void InnerNode::mergeLeft(InnerNode* leftBro, const Key& k) {
     // TODO
+    int    na = leftBro->n, nb = this->n;
+    Node** mergedChildrens = new Node*[na + nb];
+    Key*   mergedKeys      = new Key[na + nb];
+
+    _merge(leftBro, this, na, nb, mergedChildrens, mergedKeys);
+    copy(mergedKeys, mergedKeys + na + nb, leftBro->keys);
+    copy(mergedChildrens, mergedChildrens + na + nb, leftBro->childrens);
+
+    delete[] mergedChildrens;
+    delete[] mergedKeys;
 }
 
 // merge all entries to its right bro, delete this node after merging.
 void InnerNode::mergeRight(InnerNode* rightBro, const Key& k) {
     // TODO
+    int    na = rightBro->n, nb = this->n;
+    Node** mergedChildrens = new Node*[na + nb];
+    Key*   mergedKeys      = new Key[na + nb];
+    
+    _merge(rightBro, this, na, nb, mergedChildrens, mergedKeys);
+    copy(mergedKeys, mergedKeys + na + nb, rightBro->keys);
+    copy(mergedChildrens, mergedChildrens + na + nb, rightBro->childrens);
+
+    delete[] mergedChildrens;
+    delete[] mergedKeys;
 }
 
 // remove a children from the current node, used by remove func
