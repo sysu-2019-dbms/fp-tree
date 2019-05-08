@@ -118,13 +118,17 @@ KeyNode InnerNode::split() {
 // the InnerNode need to be redistributed or merged after deleting one of its children node.
 bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete) {
     int pos = findIndex(k);
-    cout << "InnerNode::remove Key: " << k << endl;
-    if (pos == 0) cout << "Key: " << k << "Not found" << endl;
     if (pos == 0) return false;
     bool ifRemove = false;
     ifRemove      = childrens[pos - 1]->remove(k, pos - 1, this, ifDelete);
     if (ifDelete) {
         removeChild(pos - 1, pos - 1);
+        if (isRoot && n == 1 && !childrens[0]->ifLeaf()) {
+            tree->root = dynamic_cast<InnerNode*>(childrens[0]);
+            tree->root->isRoot = true;
+            return ifRemove;
+        }
+
         if (n < degree + 1 && !isRoot) {
             // The node does not satisfy constraints any more.
             // Need to do a lot of work:
@@ -199,7 +203,12 @@ void InnerNode::mergeParentLeft(InnerNode* parent, InnerNode* leftBro) {
 
 // merge this node, its parent and right brother(parent is root)
 void InnerNode::mergeParentRight(InnerNode* parent, InnerNode* rightBro) {
-    // TODO
+    memmove(rightBro->childrens + this->n, rightBro->childrens, sizeof(Node*) * rightBro->n);
+    memmove(rightBro->keys + this->n, rightBro->keys, sizeof(Key) * rightBro->n);
+    memmove(rightBro->childrens, childrens, sizeof(Node*) * n);
+    memmove(rightBro->keys, keys, sizeof(Key) * n);
+    tree->root = rightBro;
+    rightBro->isRoot = true;
 }
 
 // this node and its left brother redistribute
@@ -262,6 +271,8 @@ void InnerNode::mergeRight(InnerNode* rightBro, const Key& k) {
 
 // remove a children from the current node, used by remove func
 void InnerNode::removeChild(int keyIdx, int childIdx) {
+    delete childrens[childIdx];
+
     --n;
     // Simply move the keys and children
     for (int i = childIdx; i < n; ++i) {
@@ -464,7 +475,6 @@ PPointer LeafNode::getPPointer() const {
 // need to call PAllocator to set this leaf free and reuse it
 bool LeafNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete) {    
     int idx = findIndex(k);
-    if (idx == -1) cout << "Leaf Node Key: " << k << " not found" << endl;
     if (idx == -1) return false;
     clear_bit(pmem->bitmap, idx);
     if (--n == 0) {
@@ -581,8 +591,9 @@ void FPTree::insert(Key k, Value v) {
 bool FPTree::remove(Key k) {
     if (root != NULL) {
         bool       ifDelete = false;
-        InnerNode* temp     = NULL;
-        return root->remove(k, -1, temp, ifDelete);
+        InnerNode* temp     = root;
+        bool ifRemove = root->remove(k, -1, nullptr, ifDelete);
+        if (ifDelete) delete temp;
     }
     return false;
 }

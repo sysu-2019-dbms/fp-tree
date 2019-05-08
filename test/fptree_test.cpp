@@ -12,7 +12,7 @@ const string file3 = DATA_DIR + "3";
 const string file4 = DATA_DIR + "4";
 
 void removeFile() {
-    PAllocator::getAllocator()->~PAllocator();
+    delete PAllocator::getAllocator();
     remove(catalogPath.c_str());
     remove(file1.c_str());
     remove(freePath.c_str());
@@ -29,6 +29,7 @@ TEST(FPTreeTest, SingleInsert) {
     LeafNode* leaf = (LeafNode*)(tree->getRoot()->getChild(0));
     EXPECT_NE(nullptr, leaf);
     if (!leaf) {
+        delete tree;
         return;
     }
     EXPECT_EQ(leaf->find(1), 100);
@@ -38,6 +39,8 @@ TEST(FPTreeTest, SingleInsert) {
     LeafNode* t_leaf = new LeafNode(leaf->getPPointer(), NULL);
     EXPECT_EQ(t_leaf->getBit(0), 1);
     EXPECT_EQ(t_leaf->find(1), 100);
+    delete tree;
+    delete t_leaf;
     removeFile();
 }
 
@@ -67,6 +70,12 @@ TEST(FPTreeTest, InsertOneLeaf) {
     LeafNode* t_l2 = new LeafNode(l2->getPPointer(), NULL);
     EXPECT_EQ(t_l11->find(1), 10);
     EXPECT_EQ(t_l2->find(LEAF_DEGREE + 1), 10 * (LEAF_DEGREE + 1));
+
+    delete t_l11;
+    delete t_l2;
+    delete t_l1;
+    delete l2;
+    delete l1;
 
     removeFile();
 }
@@ -111,10 +120,11 @@ TEST(FPTreeTest, BulkLoadingTwoLeaf) {
     EXPECT_EQ(f1.is_open(), true);
     f1.close();
     f1.clear();
-    PAllocator::getAllocator()->~PAllocator();
+    delete PAllocator::getAllocator();
 
     FPTree* tree2 = new FPTree(1);
     EXPECT_EQ(tree2->find(1), 100);
+    delete tree2;
 
     removeFile();
 }
@@ -132,6 +142,7 @@ TEST(FPTreeTest, PersistLeaf) {
     LeafNode* t_leaf = new LeafNode(p, NULL);
     EXPECT_EQ(t_leaf->find(1), 100);
     EXPECT_EQ(t_leaf->find(2), 200);
+    delete t_leaf;
 
     removeFile();
 }
@@ -142,13 +153,14 @@ TEST(FPTreeTest, BulkLoadingOneLeafGroup) {
     for (int i = 1; i < LEAF_DEGREE * 10; i++) {
         tree->insert(i, i * 10);
     }
-    PAllocator::getAllocator()->~PAllocator();
+    delete PAllocator::getAllocator();
     delete tree;
     FPTree *t_tree = new FPTree(2);
     for (int i = 1; i < LEAF_DEGREE * 10; i++) {
         EXPECT_EQ(t_tree->find(i), i * 10);
     }
     // t_tree->printTree();
+    delete t_tree;
 
     removeFile();
 }
@@ -161,12 +173,13 @@ TEST(FPTreeTest, RemoveOneEntry) {
     }
     tree->remove(1);
     delete tree;
-    PAllocator::getAllocator()->~PAllocator();
+    delete PAllocator::getAllocator();
     tree = new FPTree(4);
     EXPECT_NE(tree->find(1), 10);
     uint64_t temp = MAX_VALUE;
     EXPECT_EQ(tree->find(1), temp);
     EXPECT_EQ(tree->find(2), 20);
+    delete tree;
     removeFile();
 }
 
@@ -200,7 +213,7 @@ TEST(FPTreeTest, RemoveMultiplyEntries) {
     // remove 3 leaves
     for (int j = 0; j < LEAF_DEGREE * 3; j++, i++) {
         tree->remove(i);
-        tree->printTree();
+        // tree->printTree();
     }
     tree->remove(i);
     i++;
@@ -212,6 +225,7 @@ TEST(FPTreeTest, RemoveMultiplyEntries) {
     tree->remove(i);
     i++;
     // tree->printTree();
+    delete tree;
     removeFile();
 }
 
@@ -230,6 +244,7 @@ TEST(InneNodeTest, RedistributeRightTest) {
     }
     EXPECT_EQ(node1->getChildNum(), 3);
     EXPECT_EQ(node2->getChildNum(), 4);
+    delete tree;
     removeFile();
 }
 
@@ -249,5 +264,6 @@ TEST(InnerNodeTest, MergeTest) {
     // tree->printTree();
     EXPECT_EQ(node1->getChildNum(), 5);
     EXPECT_EQ(tree->getRoot()->getChildNum(), 4);
+    delete tree;
     removeFile();
 }
