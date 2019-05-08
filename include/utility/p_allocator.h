@@ -74,6 +74,7 @@ public:
     PPointer getUsedLeaf(int idx) const;
     PPointer getFreeLeaf(int idx) const;
     PPointer getStartPointer() const;
+    void     setStartPointer(PPointer startPointer);
     uint64_t getMaxFileId() const;
     uint64_t getFreeNum() const;
 };

@@ -114,18 +114,18 @@ KeyNode InnerNode::split() {
 }
 
 // remove the target entry
-// return TRUE if the children node is deleted after removement.
+// ifDelete==TRUE if the children node is deleted after removement.
 // the InnerNode need to be redistributed or merged after deleting one of its children node.
 bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete) {
     int pos = findIndex(k);
     if (pos == 0) return false;
-    bool ifRemove = false;
-    ifRemove      = childrens[pos - 1]->remove(k, pos - 1, this, ifDelete);
+    bool ifRemove = childrens[pos - 1]->remove(k, pos - 1, this, ifDelete);
     if (ifDelete) {
         removeChild(pos - 1, pos - 1);
         if (isRoot && n == 1 && !childrens[0]->ifLeaf()) {
-            tree->root = dynamic_cast<InnerNode*>(childrens[0]);
+            tree->root         = dynamic_cast<InnerNode*>(childrens[0]);
             tree->root->isRoot = true;
+            ifDelete           = true;
             return ifRemove;
         }
 
@@ -166,13 +166,13 @@ bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelet
                 // Case 4: the right brother has to merge with this node
                 mergeRight(rightBro, k);
                 parent->keys[index + 1] = rightBro->getMinKey();
-                ifDelete = true;
+                ifDelete                = true;
                 return ifRemove;
             } else if (leftBro) {
                 // Case 5: the left brother has to merge with this node
                 mergeLeft(leftBro, k);
                 parent->keys[index - 1] = leftBro->getMinKey();
-                ifDelete = true;
+                ifDelete                = true;
                 return ifRemove;
             }
 
@@ -184,9 +184,6 @@ bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelet
         return ifRemove;
     }
     keys[0] = childrens[0]->getMinKey();
-
-    // recursive remove
-    // TODO
     return ifRemove;
 }
 
@@ -198,7 +195,11 @@ void InnerNode::getBrother(int index, InnerNode* parent, InnerNode*& leftBro, In
 
 // merge this node, its parent and left brother(parent is root)
 void InnerNode::mergeParentLeft(InnerNode* parent, InnerNode* leftBro) {
-    // TODO
+    memmove(leftBro->childrens + leftBro->n, childrens, sizeof(Node*) * n);
+    memmove(leftBro->keys + leftBro->n, keys, sizeof(Key) * n);
+    leftBro->n += n;
+    tree->root      = leftBro;
+    leftBro->isRoot = true;
 }
 
 // merge this node, its parent and right brother(parent is root)
@@ -207,7 +208,8 @@ void InnerNode::mergeParentRight(InnerNode* parent, InnerNode* rightBro) {
     memmove(rightBro->keys + this->n, rightBro->keys, sizeof(Key) * rightBro->n);
     memmove(rightBro->childrens, childrens, sizeof(Node*) * n);
     memmove(rightBro->keys, keys, sizeof(Key) * n);
-    tree->root = rightBro;
+    rightBro->n += n;
+    tree->root       = rightBro;
     rightBro->isRoot = true;
 }
 
@@ -473,7 +475,7 @@ PPointer LeafNode::getPPointer() const {
 // remove an entry from the leaf
 // if it has no entry after removement return TRUE to indicate outer func to delete this leaf.
 // need to call PAllocator to set this leaf free and reuse it
-bool LeafNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete) {    
+bool LeafNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete) {
     int idx = findIndex(k);
     if (idx == -1) return false;
     clear_bit(pmem->bitmap, idx);
@@ -486,6 +488,8 @@ bool LeafNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete
                 prev->pmem->pNext = PPointer{0, 0};
             }
             prev->get_pmem_ptr().flush_part(&(prev->pmem->pNext));
+        } else {
+            PAllocator::getAllocator()->setStartPointer(pmem->pNext);
         }
         if (next) {
             next->prev = prev;
@@ -592,7 +596,7 @@ bool FPTree::remove(Key k) {
     if (root != NULL) {
         bool       ifDelete = false;
         InnerNode* temp     = root;
-        bool ifRemove = root->remove(k, -1, nullptr, ifDelete);
+        bool       ifRemove = root->remove(k, -1, nullptr, ifDelete);
         if (ifDelete) delete temp;
     }
     return false;

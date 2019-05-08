@@ -164,5 +164,8 @@ pmem_ptr<leaf_group> &PAllocator::getLeafGroup(PPointer p) {
 }
 
 PPointer PAllocator::getStartPointer() const { return this->startLeaf; }
+void     PAllocator::setStartPointer(PPointer startPointer) {
+    this->startLeaf = startPointer;
+}
 uint64_t PAllocator::getMaxFileId() const { return this->maxFileId; }
 uint64_t PAllocator::getFreeNum() const { return this->freeNum; }
