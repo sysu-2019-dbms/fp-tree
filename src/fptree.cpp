@@ -123,27 +123,34 @@ bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelet
     ifRemove      = childrens[pos - 1]->remove(k, pos - 1, this, ifDelete);
     if (ifDelete) {
         --n;
-        if (n >= degree + 1) {
-            // Case 1: The tree still satisfies the constraints
-            removeChild(pos - 1, pos - 1);
-        } else {
+        removeChild(pos - 1, pos - 1);
+
+        if (n < degree + 1) {
+            // The node does not satisfy constraints any more.
             // Need to do a lot of work:
             InnerNode *leftBro = nullptr, *rightBro = nullptr;
             getBrother(index, parent, leftBro, rightBro);
-            if (rightBro) {
-                if (rightBro->n > degree + 1) {
-                    // Case 2: the right brother has enough elements
-                    //         for redistribution
-                    redistributeRight(index, rightBro, parent);
-                    return ifRemove;
-                }
-            } else if (leftBro) {
-                if (leftBro->n > degree + 1) {
-                    // Case 3: the left brother has enough elements
-                    //         for redistribution
-                    redistributeLeft(index, rightBro, parent);
-                    return ifRemove;
-                }
+
+            if (parent->isRoot) {
+                // Case 6: the parent is root
+                if (leftBro)
+                    mergeParentLeft(parent, leftBro);
+                else if (rightBro)
+                    mergeParentRight(parent, rightBro);
+                return ifRemove;
+            }
+
+            if (rightBro && rightBro->n > degree + 1) {
+                // Case 2: the right brother has enough elements
+                //         for redistribution
+                redistributeRight(index, rightBro, parent);
+                return ifRemove;
+
+            } else if (leftBro && leftBro->n > degree + 1) {
+                // Case 3: the left brother has enough elements
+                //         for redistribution
+                redistributeLeft(index, rightBro, parent);
+                return ifRemove;
             }
 
             if (rightBro) {
@@ -156,15 +163,11 @@ bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelet
                 return ifRemove;
             }
 
-            if (parent->isRoot) {
-                // Case 6: the parent is root
-                if (leftBro) mergeParentLeft(parent, leftBro);
-                else if (rightBro) mergeParentRight(parent, rightBro);
-                return ifRemove;
-            }
-
             return false;
         }
+
+        // Case 1: The tree still satisfies the constraints
+        return ifRemove;
     }
 
     // recursive remove
@@ -192,12 +195,42 @@ void InnerNode::mergeParentRight(InnerNode* parent, InnerNode* rightBro) {
 // the left has more entries
 void InnerNode::redistributeLeft(int index, InnerNode* leftBro, InnerNode* parent) {
     // TODO
+    // leftBro's max key becomes my min key
+
+    // spare space
+    for (int i = n; i > 0; --i) {
+        childrens[i] = childrens[i - 1];
+        keys[i]      = keys[i - 1];
+    }
+
+    // move the key
+    --leftBro->n;
+    keys[0]      = leftBro->keys[leftBro->n];
+    childrens[0] = leftBro->childrens[leftBro->n];
+    ++this->n;
+
+    // update parent
+    parent->keys[index] = this->getMinKey();
 }
 
 // this node and its right brother redistribute
 // the right has more entries
 void InnerNode::redistributeRight(int index, InnerNode* rightBro, InnerNode* parent) {
-    // TODO
+    // rightBro's min key becomes my max key
+
+    // move the key
+    --rightBro->n;
+    keys[n]      = rightBro->keys[0];
+    childrens[n] = rightBro->childrens[0];
+    ++this->n;
+
+    for (int i = 0; i < rightBro->n; ++i) {
+        rightBro->keys[i] = rightBro->keys[i + 1];
+        rightBro->childrens[i] = rightBro->childrens[i + 1];
+    }
+
+    // update parent
+    parent->keys[index + 1] = rightBro->getMinKey();
 }
 
 // merge all entries to its left bro, delete this node after merging.
