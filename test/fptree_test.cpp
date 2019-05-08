@@ -148,6 +148,7 @@ TEST(FPTreeTest, BulkLoadingOneLeafGroup) {
     for (int i = 1; i < LEAF_DEGREE * 10; i++) {
         EXPECT_EQ(t_tree->find(i), i * 10);
     }
+    // t_tree->printTree();
 
     removeFile();
 }
@@ -180,6 +181,8 @@ TEST(FPTreeTest, RemoveMultiplyEntries) {
     int i = 1;
     for (int j = 0; j < LEAF_DEGREE; i++, j++) {
         tree->remove(i);
+        EXPECT_EQ(tree->find(i), MAX_VALUE);
+        // tree->printTree();
     }
     tree->remove(i);
     i++;
@@ -197,6 +200,7 @@ TEST(FPTreeTest, RemoveMultiplyEntries) {
     // remove 3 leaves
     for (int j = 0; j < LEAF_DEGREE * 3; j++, i++) {
         tree->remove(i);
+        tree->printTree();
     }
     tree->remove(i);
     i++;

@@ -29,7 +29,7 @@ BIN_DIR = ./bin
 LIB_DIR = ../lib
 
 SOURCE_FILES = $(shell find $(SRC_DIR) -name '*.cpp')
-OBJS = $(patsubst $(SRC_DIR)%.cpp,$(OBJ_DIR)%.o,$(SOURCE_FILES))
+OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCE_FILES))
 
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
