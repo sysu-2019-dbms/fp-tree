@@ -120,9 +120,51 @@ bool InnerNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelet
     int pos = findIndex(k);
     if (pos == 0) return false;
     bool ifRemove = false;
-    childrens[pos - 1]->remove(k, pos - 1, this, ifRemove);
-    if (ifRemove) {
+    ifRemove      = childrens[pos - 1]->remove(k, pos - 1, this, ifDelete);
+    if (ifDelete) {
+        --n;
+        if (n >= degree + 1) {
+            // Case 1: The tree still satisfies the constraints
+            removeChild(pos - 1, pos - 1);
+        } else {
+            // Need to do a lot of work:
+            InnerNode *leftBro = nullptr, *rightBro = nullptr;
+            getBrother(index, parent, leftBro, rightBro);
+            if (rightBro) {
+                if (rightBro->n > degree + 1) {
+                    // Case 2: the right brother has enough elements
+                    //         for redistribution
+                    redistributeRight(index, rightBro, parent);
+                    return ifRemove;
+                }
+            } else if (leftBro) {
+                if (leftBro->n > degree + 1) {
+                    // Case 3: the left brother has enough elements
+                    //         for redistribution
+                    redistributeLeft(index, rightBro, parent);
+                    return ifRemove;
+                }
+            }
 
+            if (rightBro) {
+                // Case 4: the right brother has to merge with this node
+                mergeRight(rightBro, k);
+                return ifRemove;
+            } else if (leftBro) {
+                // Case 5: the left brother has to merge with this node
+                mergeLeft(leftBro, k);
+                return ifRemove;
+            }
+
+            if (parent->isRoot) {
+                // Case 6: the parent is root
+                if (leftBro) mergeParentLeft(parent, leftBro);
+                else if (rightBro) mergeParentRight(parent, rightBro);
+                return ifRemove;
+            }
+
+            return false;
+        }
     }
 
     // recursive remove
@@ -170,7 +212,11 @@ void InnerNode::mergeRight(InnerNode* rightBro, const Key& k) {
 
 // remove a children from the current node, used by remove func
 void InnerNode::removeChild(int keyIdx, int childIdx) {
-    // TODO
+    // Simply move the keys and children
+    for (int i = childIdx; i < n; ++i) {
+        keys[i]      = keys[i + 1];
+        childrens[i] = childrens[i + 1];
+    }
 }
 
 // update the target entry, return true if the update succeed.
@@ -239,9 +285,9 @@ void LeafNode::printNode() const {
 
 // new a empty leaf and set the valuable of the LeafNode
 LeafNode::LeafNode(FPTree* t) : Node(t, true) {
-    char *pmemaddr;
+    char* pmemaddr;
     PAllocator::getAllocator()->getLeaf(pPointer, pmemaddr);
-    pmem = reinterpret_cast<leaf *>(pmemaddr);
+    pmem   = reinterpret_cast<leaf*>(pmemaddr);
     degree = LEAF_DEGREE;
     n      = 0;
     prev = next = nullptr;
@@ -385,11 +431,13 @@ bool LeafNode::remove(const Key& k, int index, InnerNode* parent, bool& ifDelete
             next->prev = prev;
         }
         PAllocator::getAllocator()->freeLeaf(pPointer);
-        return true;
+        ifDelete = true;
     } else {
         get_pmem_ptr().flush_part(&(pmem->bitmap[idx / 8]));
-        return false;
+        ifDelete = false;
     }
+
+    return true;
 }
 
 // update the target entry
