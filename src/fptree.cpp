@@ -3,7 +3,7 @@
 #include <cassert>
 using namespace std;
 using namespace fp_tree;
-Node::Node(FPTree* tree, size_t degree, bool isLeaf) : tree(tree), degree(degree), isLeaf(isLeaf) {
+Node::Node(FPTree* tree, bool isLeaf) : tree(tree), isLeaf(isLeaf) {
 }
 
 FPTree* Node::getTree() const { return tree; }
@@ -11,8 +11,11 @@ FPTree* Node::getTree() const { return tree; }
 bool Node::ifLeaf() const { return isLeaf; }
 
 // Initial the new InnerNode
-InnerNode::InnerNode(size_t d, FPTree* t, bool isRoot)
-    : Node(t, t->degree, false), isRoot(isRoot), n(0) {
+InnerNode::InnerNode(size_t d, FPTree* t, bool _isRoot)
+    : Node(t, false) {
+    degree   = t->degree;
+    isRoot   = _isRoot;
+    n        = 0;
     keys     = new Key[2 * d + 2];
     children = new Node*[2 * d + 2];
 }
@@ -340,58 +343,31 @@ void LeafNode::printNode() const {
 }
 
 // new a empty leaf and set the valuable of the LeafNode
-LeafNode::LeafNode(FPTree* t) : Node(t, LEAF_DEGREE, true), prev(nullptr) {
+LeafNode::LeafNode(FPTree* t) : Node(t, true) {
     char* pmemaddr;
     PAllocator::getAllocator()->getLeaf(pPointer, pmemaddr);
-    pmem       = reinterpret_cast<leaf*>(pmemaddr);
-    n          = 0;
-    next       = nullptr;
-    filePath   = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
-    bitmapSize = 2 * degree;  // TODO
-}
-
-// use loop instead of recursive to prevent from stack overflow.
-LeafNode* LeafNode::loadAllLeafNode(leaf* pmem, FPTree* t) {
-    stack<pair<PPointer, leaf*>> sk;
-    while (pmem->pNext.fileId) {
-        PPointer pPointer = pmem->pNext;
-        pmem              = (leaf*)PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
-        sk.push(make_pair(pPointer, pmem));
-    }
-    LeafNode* node = nullptr;
-    while (!sk.empty()) {
-        pair<PPointer, leaf*> top = sk.top();
-        sk.pop();
-        node = new LeafNode(top.first, t, top.second, node);
-    }
-    return node;
+    pmem   = reinterpret_cast<leaf*>(pmemaddr);
+    degree = LEAF_DEGREE;
+    n      = 0;
+    prev = next = nullptr;
+    filePath    = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
+    bitmapSize  = 2 * degree;  // TODO
 }
 
 // reload the leaf with the specific Persistent Pointer
 // need to call the PAllocator
-LeafNode::LeafNode(PPointer pPointer, FPTree* t)
-    : Node(t, LEAF_DEGREE, true), prev(nullptr) {
+LeafNode::LeafNode(PPointer pPointer, FPTree* t) : Node(t, true) {
     this->pPointer = pPointer;
     pmem           = (leaf*)PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
+    degree         = LEAF_DEGREE;
     n              = 0;
     for (size_t i = 0; i < sizeof(pmem->bitmap); ++i)
         n += countOneBits(pmem->bitmap[i]);
-    prev = nullptr;
-    if ((next = loadAllLeafNode(pmem, t)))
+    prev = next = nullptr;
+    if (pmem->pNext.fileId) {
+        next       = new LeafNode(pmem->pNext, t);
         next->prev = this;
-    filePath   = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
-    bitmapSize = 2 * degree;  // TODO
-}
-
-LeafNode::LeafNode(PPointer pPointer, FPTree* t, leaf* pmem, LeafNode* next)
-    : Node(t, LEAF_DEGREE, true), prev(nullptr) {
-    this->pPointer = pPointer;
-    this->pmem     = pmem;
-    n              = 0;
-    for (size_t i = 0; i < sizeof(pmem->bitmap); ++i)
-        n += countOneBits(pmem->bitmap[i]);
-    if ((this->next = next))
-        next->prev = this;
+    }
     filePath   = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
     bitmapSize = 2 * degree;  // TODO
 }
@@ -478,7 +454,7 @@ Key LeafNode::findSplitKey() const {
     bzero(pmem->bitmap, sizeof(pmem->bitmap));
     for (size_t i = 0; i < n; ++i) {
         set_bit(pmem->bitmap, i);
-        pmem->kv[i]           = arr[i].kv;
+        pmem->kv[i] = arr[i].kv;
         pmem->fingerprints[i] = arr[i].fingerprint;
     }
     return pmem->kv[(n + 1) / 2].key;
