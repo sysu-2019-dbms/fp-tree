@@ -1,6 +1,6 @@
-#include <string>
-#include <iostream>
 #include <algorithm>
+#include <iostream>
+#include <string>
 
 namespace fp_tree {
 using namespace std;
@@ -14,6 +14,7 @@ protected:
     string path;
 
     void map(size_t len);
+
 public:
     pmem_stream();
     pmem_stream(pmem_stream const &) = delete;
@@ -77,7 +78,7 @@ public:
     }
 
     template <typename V>
-    void modify(V *addr, V&& newValue) {
+    void modify(V *addr, const V &newValue) {
         *addr = newValue;
         flush_part(addr);
     }
@@ -86,24 +87,25 @@ public:
 template <typename T>
 class pmem_stack : pmem_stream {
     size_t sz;
+
 public:
     pmem_stack() : pmem_stream() {}
     explicit pmem_stack(const string &path, size_t initial_num)
         : pmem_stream(path, std::max(sizeof(T) * initial_num * 2, 10UL)), sz(initial_num) {}
 
-    void push(const T& element) {
+    void push(const T &element) {
         if (mapped_len < (sz + 1) * sizeof(T)) {
             close();
             map((sz + 1) * sizeof(T) * 2);
         }
 
-        reinterpret_cast<T*>(addr)[sz] = element;
+        reinterpret_cast<T *>(addr)[sz] = element;
         flush(addr + sz * sizeof(T), sizeof(T));
         ++sz;
     }
 
     T &back() const {
-        return reinterpret_cast<T*>(addr)[sz - 1];
+        return reinterpret_cast<T *>(addr)[sz - 1];
     }
 
     void pop() {

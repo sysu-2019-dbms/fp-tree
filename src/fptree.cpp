@@ -378,7 +378,8 @@ LeafNode::~LeafNode() {
 // insert an entry into the leaf, need to split it if it is full
 KeyNode LeafNode::insert(const Key& k, const Value& v) {
     KeyNode newChild{k, nullptr};
-    // TODO
+    if (update(k, v)) return newChild;
+
     if (n >= 2 * degree - 1) {
         newChild = split();
         if (k < newChild.key) {
@@ -514,8 +515,7 @@ bool LeafNode::remove(const Key& k, int /*index*/, InnerNode* /*parent*/, bool& 
 bool LeafNode::update(const Key& k, const Value& v) {
     int pos = findIndex(k);
     if (pos == -1) return false;
-    pmem->kv[pos].value = v;
-    get_pmem_ptr().flush_part(&pmem->kv[pos].value);
+    get_pmem_ptr().modify(&pmem->kv[pos].value, v);
     return true;
 }
 
