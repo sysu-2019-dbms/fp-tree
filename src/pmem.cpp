@@ -21,7 +21,6 @@ pmem_stream::pmem_stream(pmem_stream &&b) noexcept : addr(nullptr), cur(nullptr)
 }
 
 pmem_stream::~pmem_stream() {
-    flush();
     close();
 }
 
