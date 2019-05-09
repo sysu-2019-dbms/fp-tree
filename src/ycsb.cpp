@@ -10,7 +10,7 @@
 #endif
 
 using namespace std;
-
+const int n = 2200000;
 const string workload = PROJECT_ROOT "/workloads/";
 
 const string load =
@@ -72,8 +72,8 @@ void operate_fptree(FPTree* fp, uint64_t keys[], bool ifInsert[], int n, uint64_
 void testFPTree() {
     FPTree          fptree(1028);
     uint64_t        inserted = 0, queried = 0, t = 0;
-    uint64_t*       key      = new uint64_t[2200000];
-    bool*           ifInsert = new bool[2200000];
+    uint64_t*       key      = new uint64_t[n];
+    bool*           ifInsert = new bool[n];
     FILE *          ycsb, *ycsb_read;
     char*           buf = NULL;
     size_t          len = 0;
@@ -84,12 +84,12 @@ void testFPTree() {
     printf("Load phase begins \n");
 
     // TODO: read the ycsb_load
-    read_ycsb(load, 2200000, key, ifInsert);
+    read_ycsb(load, n, key, ifInsert);
 
     clock_gettime(CLOCK_MONOTONIC, &start);
 
     // TODO: load the workload in the fptree
-    operate_fptree(&fptree, key, ifInsert, 2200000, inserted, queried);
+    operate_fptree(&fptree, key, ifInsert, n, inserted, queried);
 
     clock_gettime(CLOCK_MONOTONIC, &finish);
     single_time = (finish.tv_sec - start.tv_sec) * 1000000000.0 +
@@ -126,8 +126,8 @@ void testFPTree() {
 
 void testLevelDB() {
     uint64_t        inserted = 0, queried = 0, t = 0;
-    uint64_t*       key      = new uint64_t[2200000];
-    bool*           ifInsert = new bool[2200000];
+    uint64_t*       key      = new uint64_t[n];
+    bool*           ifInsert = new bool[n];
     FILE *          ycsb, *ycsb_read;
     char*           buf = NULL;
     size_t          len = 0;
@@ -150,10 +150,10 @@ void testLevelDB() {
 
     inserted = 0;
     printf("Load phase begins \n");
-    read_ycsb(load, 2200000, key, ifInsert);
+    read_ycsb(load, n, key, ifInsert);
 
     clock_gettime(CLOCK_MONOTONIC, &start);
-    operate_db(db, key, ifInsert, 2200000, read_options, write_options,
+    operate_db(db, key, ifInsert, n, read_options, write_options,
                inserted, queried);
 
     clock_gettime(CLOCK_MONOTONIC, &finish);
