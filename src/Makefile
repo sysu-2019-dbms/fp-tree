@@ -14,15 +14,15 @@ YCSB = ./bin/ycsb
 
 LYCSB = ./bin/lycsb
 
-BIN = bin
+BIN = ./bin
 
-OBJ = ./obj
+OBJ = ../obj
 
-FPTREE = fptree.o
-UTILITY = utility.o
-PMEM = pmem.o
-PALLOCATOR = pallocator.o
-CLHASH = clhash.o
+FPTREE = $(OBJ)/fptree.o
+UTILITY = $(OBJ)/utility.o
+PMEM = $(OBJ)/pmem.o
+PALLOCATOR = $(OBJ)/pallocator.o
+CLHASH = $(OBJ)/clhash.o
 
 all : $(LYCSB) $(YCSB) $(MAIN) $(FPTREE) $(UTILITY) $(PALLOCATOR) $(CLHASH)
 
@@ -49,11 +49,8 @@ LEVELDB:=\
 $(PMEM) : pmem.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ -I $(HEADER_DIR) 
 
-main.o : main.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@ -I $(HEADER_DIR)
-
-$(MAIN): main.o $(FPTREE) $(PALLOCATOR) $(UTILITY) $(PMEM) $(CLHASH)
-	$(CXX) $(CXXFLAGS) $^ -lpmem -lpthread -o $@
+$(MAIN): main.cpp $(FPTREE) $(PALLOCATOR) $(UTILITY) $(PMEM) $(CLHASH)
+	$(CXX) $(CXXFLAGS) -I$(HEADER_DIR) $^ -lpmem -lpthread -o $@
 
 $(FPTREE) : fptree.cpp $(HEADER_DIR)/utility/pmem.h
 	$(CXX) $(CXXFLAGS) -c $< -o $@ -I $(HEADER_DIR) 
@@ -75,8 +72,7 @@ $(YCSB): ycsb.cpp $(FPTREE) $(PALLOCATOR) $(UTILITY) $(PMEM) $(CLHASH)
 
 	@mkdir -p $(BIN)
 
-	$(CXX) $(CXXFLAGS) $(LEVELDB_FLAGS) -c $< -o ycsb.o -I $(HEADER_DIR) -L$(LEVELDB_LIBRARY_PATH)
-	$(CXX) $(CXXFLAGS) $(LEVELDB_FLAGS) ycsb.o $(FPTREE) $(PALLOCATOR) $(UTILITY) $(PMEM) $(CLHASH) -o $@ -I $(HEADER_DIR) -L$(LEVELDB_LIBRARY_PATH) -lleveldb -lpthread -lpmem
+	$(CXX) $(CXXFLAGS) $(LEVELDB_FLAGS) $^ -o $@ -I $(HEADER_DIR) -L$(LEVELDB_LIBRARY_PATH) -lleveldb -lpthread -lpmem
 
 $(LYCSB): lycsb.cpp 
 
