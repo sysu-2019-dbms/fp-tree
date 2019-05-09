@@ -24,7 +24,7 @@ PMEM = pmem.o
 PALLOCATOR = pallocator.o
 CLHASH = clhash.o
 
-all : $(LYCSB) $(Y/home/u/Desktop/fp-tree/src/ycsb.cppCSB) $(MAIN) $(FPTREE) $(UTILITY) $(PALLOCATOR) $(CLHASH)
+all : $(LYCSB) $(YCSB) $(MAIN) $(FPTREE) $(UTILITY) $(PALLOCATOR) $(CLHASH)
 
 PROJECT_ROOT:=$(shell pwd)/..
 LEVELDB_DB_PATH:=/tmp/leveldb

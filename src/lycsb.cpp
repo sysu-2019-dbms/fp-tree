@@ -106,7 +106,7 @@ int main() {
     single_time = (finish.tv_sec - start.tv_sec) +
                   (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
     printf("Run phase finishes: %d/%d items are inserted/searched\n",
-           operation_num - inserted, inserted);
+           operation_num - queried, queried);
     printf("Run phase throughput: %f operations per second \n",
            READ_WRITE_NUM / single_time);
     return 0;

@@ -127,7 +127,6 @@ int main() {
 
     // LevelDB
     printf("===================LevelDB====================\n");
-    const string filePath = "";  // data storing folder(NVM)
 
     memset(key, 0, 2200000);
     memset(ifInsert, 0, 2200000);
@@ -136,19 +135,15 @@ int main() {
     leveldb::Options options;
     leveldb::ReadOptions read_options;
     leveldb::WriteOptions write_options;
-    // TODO: initial the levelDB
     options.create_if_missing = true;
     leveldb::Status status = leveldb::DB::Open(options, filePath, &db);
     assert(status.ok());
 
     inserted = 0;
     printf("Load phase begins \n");
-    // TODO: read the ycsb_read
     read_ycsb(load, 2200000, key, ifInsert);
 
     clock_gettime(CLOCK_MONOTONIC, &start);
-    // TODO: load the levelDB
-    
     operate_db(db, key, ifInsert, 2200000, read_options, write_options,
                inserted, queried);
 
@@ -162,7 +157,8 @@ int main() {
     printf("Run phase begin\n");
     operation_num = 0;
     inserted = 0;
-    // TODO: read the ycsb_run
+    queried = 0;
+    
     read_ycsb(run, READ_WRITE_NUM, key, ifInsert);
 
     clock_gettime(CLOCK_MONOTONIC, &start);
@@ -174,7 +170,7 @@ int main() {
     operation_num = inserted + queried;
 
     clock_gettime(CLOCK_MONOTONIC, &finish);
-    fclose(ycsb_read);
+    
     single_time = (finish.tv_sec - start.tv_sec) +
                   (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
     printf("Run phase finishes: %d/%d items are inserted/searched\n", inserted,
