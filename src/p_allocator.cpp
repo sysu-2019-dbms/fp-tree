@@ -40,24 +40,21 @@ PAllocator::PAllocator() {
     if (allocatorCatalog.is_open() && freeListFile.is_open()) {
         allocatorCatalog.close();
         freeListFile.close();
-        pmem_ptr<allocator_catalog> catalog(catalogPath);
-        maxFileId = catalog->maxFileId;
-        freeNum   = catalog->freeNum;
-        startLeaf = catalog->startLeaf;
+        catalog = std::move(pmem_ptr<allocator_catalog>{catalogPath});
 
-        pmem_stream freelist(freePath, sizeof(PPointer) * freeNum);
-        for (uint64_t i = 0; i < freeNum; i++) {
+        pmem_stream freelist(freePath, sizeof(PPointer) * getFreeNum());
+        for (uint64_t i = 0; i < getFreeNum(); i++) {
             PPointer p;
             freelist >> p;
             freeList.push_back(p);
         }
     } else {
         // simply create file
-        pmem_ptr<allocator_catalog> catalog(catalogPath);
-        pmem_ptr<empty_free_list>   list(freePath);
-        maxFileId        = 1;
-        freeNum          = 0;
-        startLeaf.fileId = 0;
+        pmem_ptr<empty_free_list> list(freePath);
+        catalog = std::move(pmem_ptr<allocator_catalog>{catalogPath});
+        catalog->maxFileId        = 1;
+        catalog->freeNum          = 0;
+        catalog->startLeaf.fileId = 0;
     }
     this->initFilePmemAddr();
 }
@@ -70,7 +67,7 @@ PAllocator::~PAllocator() {
 // memory map all leaves to pmem address, storing them in the fId2PmAddr
 void PAllocator::initFilePmemAddr() {
     fId2PmAddr.clear();
-    for (uint64_t i = 1; i < maxFileId; i++) {
+    for (uint64_t i = 1; i < getMaxFileId(); i++) {
         fId2PmAddr.emplace(i, pmem_ptr<leaf_group>(getLeafGroupFilePath(i)));
     }
 }
@@ -83,25 +80,22 @@ leaf *PAllocator::getLeafPmemAddr(PPointer p) const {
 // get and use a leaf for the fptree leaf allocation
 // return false if no free leaf is available
 bool PAllocator::getLeaf(PPointer &p, char *&pmem_addr) {
-    if (freeNum == 0) {
+    if (getFreeNum() == 0) {
         if (!newLeafGroup()) return false;
     }
+    // need not to flush freelist, we just pop back
     p = freeList.back();
     freeList.pop_back();
-    freeNum--;
+    catalog->freeNum--;
 
     pmem_ptr<leaf_group> &group = fId2PmAddr[p.fileId];
     group->usedNum++;
     group->used(p) = 1;
-    group.flush();
     pmem_addr = group.get_addr() + p.offset;
 
-    if (!startLeaf.fileId) {
-        startLeaf = p;
+    if (!catalog->startLeaf.fileId) {
+        catalog->startLeaf = p;
     }
-
-    persistCatalog();
-
     return true;
 }
 
@@ -123,20 +117,16 @@ bool PAllocator::freeLeaf(PPointer p) {
     if (ifLeafUsed(p)) {
         fId2PmAddr[p.fileId]->used(p) = 0;
         freeList.push_back(p);
-        freeNum++;
+        catalog->freeNum++;
         return true;
     }
     return false;
 }
 
 bool PAllocator::persistCatalog() {
-    pmem_ptr<allocator_catalog> catalog(catalogPath);
-    if (!catalog) return false;
-    *catalog = (allocator_catalog){maxFileId, freeNum, startLeaf};
-
-    pmem_stream freelist(freePath, sizeof(PPointer) * freeNum);
+    pmem_stream freelist(freePath, sizeof(PPointer) * catalog->freeNum);
     if (!freelist) return false;
-    for (uint64_t i = 0; i < freeNum; i++) {
+    for (uint64_t i = 0; i < catalog->freeNum; i++) {
         freelist << freeList[i];
     }
     return true;
@@ -144,14 +134,14 @@ bool PAllocator::persistCatalog() {
 
 // create a new leafgroup, one file per leafgroup
 bool PAllocator::newLeafGroup() {
-    pmem_ptr<leaf_group> group(getLeafGroupFilePath(maxFileId));
+    pmem_ptr<leaf_group> group(getLeafGroupFilePath(getMaxFileId()));
     if (!group) return false;
     for (size_t i = 0; i < LEAF_GROUP_AMOUNT; i++) {
-        freeList.push_back((PPointer){maxFileId, (uint64_t) & ((leaf_group *)0)->leaves[i]});
+        freeList.push_back((PPointer){getMaxFileId(), (uint64_t) & ((leaf_group *)0)->leaves[i]});
     }
-    fId2PmAddr.emplace(maxFileId, std::move(group));
-    freeNum += LEAF_GROUP_AMOUNT;
-    maxFileId++;
+    fId2PmAddr.emplace(getMaxFileId(), std::move(group));
+    catalog->freeNum += LEAF_GROUP_AMOUNT;
+    catalog->maxFileId++;
     return true;
 }
 
@@ -163,9 +153,9 @@ pmem_ptr<leaf_group> &PAllocator::getLeafGroup(PPointer p) {
     return fId2PmAddr[p.fileId];
 }
 
-PPointer PAllocator::getStartPointer() const { return this->startLeaf; }
+PPointer PAllocator::getStartPointer() const { return catalog->startLeaf; }
 void     PAllocator::setStartPointer(PPointer startPointer) {
-    this->startLeaf = startPointer;
+    catalog->startLeaf = startPointer;
 }
-uint64_t PAllocator::getMaxFileId() const { return this->maxFileId; }
-uint64_t PAllocator::getFreeNum() const { return this->freeNum; }
+uint64_t PAllocator::getMaxFileId() const { return catalog->maxFileId; }
+uint64_t PAllocator::getFreeNum() const { return catalog->freeNum; }

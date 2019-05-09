@@ -44,10 +44,9 @@ struct leaf_group {
 class PAllocator {
 private:
     static PAllocator* pAllocator;  // singleton
-    PPointer           startLeaf;   // first leaf's PPointer of fptree
-    uint64_t           maxFileId;   // current fileId not used
-    uint64_t           freeNum;     // free leaves amount
     vector<PPointer>   freeList;    // leaves list: the leaf that has been allocatored but is free
+
+    fp_tree::pmem_ptr<allocator_catalog> catalog;
 
     map<uint64_t, fp_tree::pmem_ptr<leaf_group>> fId2PmAddr;  // the map of fileId to pmem address
 

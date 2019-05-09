@@ -35,8 +35,8 @@ OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCE_FILES))
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
 # the compiler doesn't generate warnings in Google Test headers.
-CPPFLAGS = -O3 -march=native -funroll-loops -isystem $(GTEST_DIR)/include
-
+CPPFLAGS = -isystem $(GTEST_DIR)/include
+OPTFLAGS = -O3 -march=native -funroll-loops
 CFLAGS = -fPIC -std=c99 -O3 -march=native -funroll-loops -Wstrict-overflow -Wstrict-aliasing -Wall -Wextra -pedantic -Wshadow
 
 # Flags passed to the C++ compiler.
@@ -59,10 +59,10 @@ GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
                 $(GTEST_DIR)/include/gtest/internal/*.h
 
 # House-keeping build targets.
-debug :
-	CPPFLAGS = -g3 -isystem $(GTEST_DIR)/include
-debug : all
 all : $(LIB_DIR) $(OBJ_DIR) $(GTEST_LIBS) $(BIN_DIR) $(TESTS)
+
+debug : OPTFLAGS = -g -g3
+debug : all
 
 clean :
 	rm -rf $(GTEST_LIBS) $(TESTS) *.o ../data/* $(BIN_DIR) $(LIB_DIR) $(OBJ_DIR)
@@ -98,7 +98,7 @@ $(LIB_DIR)/libgtest_main.a : $(OBJ_DIR)/gtest-all.o $(OBJ_DIR)/gtest_main.o
 
 # ===============================TODO: all below=================================
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEPS) $(OBJ_DIR)
-	$(CXX) $(CXXFLAGS) -I $(INC_DIR) -c $< -o $@
+	$(CXX) $(OPTFLAGS) $(CXXFLAGS) -I $(INC_DIR) -c $< -o $@
 
 $(OBJ_DIR)/clhash.o : $(SRC_DIR)/clhash.c
 	$(CC) $(CFLAGS) -c $(SRC_DIR)/clhash.c -I $(INC_DIR) -o $@

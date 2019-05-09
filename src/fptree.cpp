@@ -438,10 +438,24 @@ KeyNode LeafNode::split() {
 // called by the split func to generate new leaf-node
 // qsort first then find
 Key LeafNode::findSplitKey() const {
-    nth_element(pmem->kv, pmem->kv + (n + 1) / 2, pmem->kv + n);
-    transform(pmem->kv, pmem->kv + n, pmem->fingerprints, [](key_value const& kv) {
-        return keyHash(kv.key);
-    });
+    struct kvf {
+        key_value kv;
+        Byte      fingerprint;
+    };
+    static kvf arr[LEAF_DEGREE * 2];
+    size_t     len = 0;
+    for (size_t i = 0; i < bitmapSize; ++i)
+        if (getBit(i)) {
+            arr[len++] = {pmem->kv[i], pmem->fingerprints[i]};
+        }
+    assert(len == n);
+    nth_element(arr, arr + (n + 1) / 2, arr + n, [](const kvf& a, const kvf& b) { return a.kv.key < b.kv.key; });
+    bzero(pmem->bitmap, sizeof(pmem->bitmap));
+    for (size_t i = 0; i < n; ++i) {
+        set_bit(pmem->bitmap, i);
+        pmem->kv[i] = arr[i].kv;
+        pmem->fingerprints[i] = arr[i].fingerprint;
+    }
     return pmem->kv[(n + 1) / 2].key;
 }
 
@@ -520,7 +534,7 @@ Value LeafNode::find(const Key& k) const {
 }
 
 Key LeafNode::getMinKey() const {
-    Key  ans;
+    Key  ans = MAX_VALUE;
     bool met = false;
     for (size_t i = 0; i < bitmapSize; ++i)
         if (getBit(i)) {
