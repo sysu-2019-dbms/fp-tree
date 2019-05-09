@@ -44,6 +44,14 @@ public:
      */
     virtual KeyNode split() = 0;
 
+    /**
+     * \brief remove the key and related value.
+     * \param k the key to be removed.
+     * \param index the child index in parent.
+     * \param ifDelete set to true if this node is to be deleted.
+     * \return true if the key exists, and remove operation succeeds.
+     * \note caller node should delete this node if ifDelete is true.
+     */
     virtual bool remove(const Key& k, int index, InnerNode* parent, bool& ifDelete) = 0;
 
     /**
@@ -98,7 +106,7 @@ private:
     bool   isRoot;     // judge whether the node is root
     int    n;          // amount of children
     Key*   keys;       // max (2 * d + 2) keys
-    Node** childrens;  // max (2 * d + 2) node pointers
+    Node** children;  // max (2 * d + 2) node pointers
 
     int findIndex(const Key& k) const;
 
@@ -191,7 +199,7 @@ private:
     InnerNode* root;
     uint64_t   degree;
 
-    void recursiveDelete(Node* n);
+    void recursiveDelete(Node* n); // call by the ~FPTree(), delete the whole tree
 
 public:
     FPTree(uint64_t degree);
@@ -203,9 +211,14 @@ public:
     Value     find(Key k);
     LeafNode* findLeaf(Key K);
 
-    InnerNode* getRoot();
-    void       changeRoot(InnerNode* newRoot);
+    InnerNode* getRoot(); // get the root node of the tree
+    void       changeRoot(InnerNode* newRoot); // change the root of the tree
+    
     void       printTree();
 
+    /**
+     * \brief load data from persistent memory.
+     * \return true if any data exists in the pmem.
+     */
     bool bulkLoading();
 };
