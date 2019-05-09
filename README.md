@@ -58,7 +58,7 @@ The command `make all` will build googletest library into directory `test`. You 
 
 ### YCSB
 
-![YCSB](./image/YCSB.png)
+![YCSB](./image/ycsb.png)
 
 ### Google Test
 
