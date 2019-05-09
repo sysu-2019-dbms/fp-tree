@@ -43,11 +43,18 @@ uint64_t calLeafSize();
 
 uint64_t countOneBits(Byte b);
 
-void set_bit(Byte bitmap[], int n);
+/**
+ * \brief find first zero bit in bitmap.
+ * \param len bit length of the bitmap.
+ * \return first zero bit index or -1 if not found.
+ */
+int  find_first_zero(Byte bitmap[], size_t len);
+void set_bit(Byte bitmap[], size_t n);
+void clear_bit(Byte bitmap[], size_t n);
+void clear_bit_since(Byte bitmap[], size_t len, size_t n);
+void clear_bit_until(Byte bitmap[], size_t len, size_t n);
 
-void clear_bit(Byte bitmap[], int n);
-
-int get_bit(Byte bitmap[], int n);
+int get_bit(Byte bitmap[], size_t n);
 
 Byte keyHash(Key k);
 
