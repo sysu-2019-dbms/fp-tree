@@ -44,9 +44,9 @@ struct leaf_group {
 class PAllocator {
 private:
     static PAllocator* pAllocator;  // singleton
-    vector<PPointer>   freeList;    // leaves list: the leaf that has been allocatored but is free
-
+    
     fp_tree::pmem_ptr<allocator_catalog> catalog;
+    fp_tree::pmem_stack<PPointer> freeList;
 
     map<uint64_t, fp_tree::pmem_ptr<leaf_group>> fId2PmAddr;  // the map of fileId to pmem address
 
@@ -67,8 +67,6 @@ public:
     bool  ifLeafUsed(PPointer p) const;            // judge whether the leaf is used
     bool  ifLeafFree(PPointer p) const;            // judge whether the leaf is free
     bool  ifLeafExist(PPointer p) const;           // judge whether the leaf exists
-
-    bool persistCatalog();  // persist the catalog file in NVM/SSD
 
     PPointer getUsedLeaf(int idx) const;
     PPointer getFreeLeaf(int idx) const;

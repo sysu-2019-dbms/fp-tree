@@ -8,6 +8,10 @@ using namespace std;
 pmem_stream::pmem_stream() : addr(nullptr), cur(nullptr) {}
 
 pmem_stream::pmem_stream(const string &path, size_t len) : path(path) {
+    map(len);
+}
+
+void pmem_stream::map(size_t len) {
     addr = (char *)pmem_map_file(path.c_str(), len, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem);
     cur  = addr;
 }
@@ -17,12 +21,23 @@ pmem_stream::pmem_stream(pmem_stream &&b) noexcept : addr(nullptr), cur(nullptr)
 }
 
 pmem_stream::~pmem_stream() {
+    flush();
     close();
 }
 
 pmem_stream &pmem_stream::operator=(pmem_stream &&b) noexcept {
     swap(b);
     return *this;
+}
+
+void pmem_stream::seekg(streampos pos, ios::seekdir dir) {
+    if (dir == ios::beg) {
+        cur = addr + pos;
+    } else if (dir == ios::cur) {
+        cur += pos;
+    } else {
+        cur = addr + mapped_len - pos;
+    }
 }
 
 void pmem_stream::swap(pmem_stream &b) noexcept {
@@ -47,7 +62,6 @@ void pmem_stream::flush() const {
 
 void pmem_stream::close() {
     if (!addr) return;
-    flush();
     pmem_unmap(addr, mapped_len);
 }
 
