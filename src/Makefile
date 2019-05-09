@@ -27,7 +27,7 @@ CLHASH = $(OBJ)/clhash.o
 all : $(LYCSB) $(YCSB) $(MAIN) $(FPTREE) $(UTILITY) $(PALLOCATOR) $(CLHASH)
 
 PROJECT_ROOT:=$(shell pwd)/..
-LEVELDB_DB_PATH:=/tmp/leveldb
+LEVELDB_DB_PATH:=/pmem-fs/leveldb
 LEVELDB_PATH:=$(PROJECT_ROOT)/leveldb
 LEVELDB_INCLUDE_PATH:=$(LEVELDB_PATH)/include
 LEVELDB_LIBRARY_PATH:=$(LEVELDB_PATH)/build
