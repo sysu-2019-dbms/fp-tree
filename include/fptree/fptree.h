@@ -163,7 +163,8 @@ private:
     string    filePath;  // the file path of the leaf
 
     size_t bitmapSize;  // the bitmap size of the leaf(bytes)
-    LeafNode(const LeafNode&) = default;
+    
+    LeafNode();             // only to prevent recursion
 public:
     LeafNode(FPTree* tree);           // allocate a new leaf
     LeafNode(PPointer p, FPTree* t);  // read a leaf from NVM/SSD

@@ -354,25 +354,34 @@ LeafNode::LeafNode(FPTree* t) : Node(t, true) {
     bitmapSize  = 2 * degree;
 }
 
+LeafNode::LeafNode() : Node(nullptr, true) {}
+
 // reload the leaf with the specific Persistent Pointer
 // need to call the PAllocator
 LeafNode::LeafNode(PPointer pPointer, FPTree* t) : Node(t, true) {
     LeafNode* cur = this;
+    this->prev    = nullptr;
+    // A little bit tricky here
+    // because using recursion to create
+    // leaves may lead to stack overflow.
     do {
-        cur->pPointer = pPointer;
-        cur->pmem     = (leaf*)PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
-        cur->degree   = LEAF_DEGREE;
-        cur->n        = 0;
+        cur->pPointer   = pPointer;
+        cur->pmem       = (leaf*)PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
+        cur->degree     = LEAF_DEGREE;
+        cur->n          = 0;
+        cur->next       = nullptr;  // The prev pointer has been set in the previous loop so we must not overwrite it
+        cur->filePath   = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
+        cur->bitmapSize = 2 * cur->degree;
+
         for (size_t i = 0; i < sizeof(cur->pmem->bitmap); ++i)
             cur->n += countOneBits(cur->pmem->bitmap[i]);
-        cur->prev = cur->next = nullptr;
-        cur->filePath         = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
-        cur->bitmapSize       = 2 * cur->degree;
+
     } while (cur->pmem->pNext.fileId && ({
-                 cur->next       = new LeafNode(*cur);
+                 cur->next       = new LeafNode();  // Use trivial constructor to prevent recursion
                  pPointer        = cur->pmem->pNext;
                  cur->next->prev = cur;
                  cur             = cur->next;
+                 cur->tree       = t;
              }));
 }
 
