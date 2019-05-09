@@ -17,7 +17,7 @@ protected:
     friend class FPTree;
 
     FPTree* tree;
-    int     degree;  // the degree of the node
+    size_t  degree;  // the degree of the node
     bool    isLeaf;
 
 public:
@@ -44,6 +44,14 @@ public:
      */
     virtual KeyNode split() = 0;
 
+    /**
+     * \brief remove the key and related value.
+     * \param k the key to be removed.
+     * \param index the child index in parent.
+     * \param ifDelete set to true if this node is to be deleted.
+     * \return true if the key exists, and remove operation succeeds.
+     * \note caller node should delete this node if ifDelete is true.
+     */
     virtual bool remove(const Key& k, int index, InnerNode* parent, bool& ifDelete) = 0;
 
     /**
@@ -95,10 +103,10 @@ class InnerNode : public Node {
 private:
     friend class FPTree;
 
-    bool   isRoot;     // judge whether the node is root
-    int    n;          // amount of children
-    Key*   keys;       // max (2 * d + 2) keys
-    Node** childrens;  // max (2 * d + 2) node pointers
+    bool   isRoot;    // judge whether the node is root
+    size_t n;         // amount of children
+    Key*   keys;      // max (2 * d + 2) keys
+    Node** children;  // max (2 * d + 2) node pointers
 
     int findIndex(const Key& k) const;
 
@@ -113,7 +121,7 @@ private:
     void mergeRight(InnerNode* rightBro, const Key& k);
 
 public:
-    InnerNode(int d, FPTree* tree, bool _ifRoot = false);
+    InnerNode(size_t d, FPTree* tree, bool _ifRoot = false);
     ~InnerNode();
 
     KeyNode insert(const Key& k, const Value& v) override;
@@ -127,8 +135,8 @@ public:
     KeyNode split() override;
     void    removeChild(int KeyIdx, int childIdx);
 
-    Node* getChild(int idx);
-    Key   getKey(int idx);
+    Node* getChild(size_t idx);
+    Key   getKey(size_t idx);
     int   getKeyNum() const;
     int   getChildNum() const;
     bool  getIsRoot() const;
@@ -148,13 +156,13 @@ private:
     fp_tree::pmem_ptr<leaf_group>& get_pmem_ptr() const;
 
     // the DRAM relative variables
-    int       n;         // amount of entries
+    size_t    n;         // amount of entries
     LeafNode* prev;      // the address of previous leafnode
     LeafNode* next;      // the address of next leafnode
     PPointer  pPointer;  // the persistent pointer pointed to the leaf in NVM
     string    filePath;  // the file path of the leaf
 
-    uint64_t bitmapSize;  // the bitmap size of the leaf(bytes)
+    size_t bitmapSize;  // the bitmap size of the leaf(bytes)
 
 public:
     LeafNode(FPTree* tree);           // allocate a new leaf
@@ -189,12 +197,12 @@ class FPTree {
 private:
     friend class InnerNode;
     InnerNode* root;
-    uint64_t   degree;
+    size_t     degree;
 
-    void recursiveDelete(Node* n);
+    void recursiveDelete(Node* n);  // call by the ~FPTree(), delete the whole tree
 
 public:
-    FPTree(uint64_t degree);
+    FPTree(size_t degree);
     ~FPTree();
 
     void      insert(Key k, Value v);
@@ -203,9 +211,14 @@ public:
     Value     find(Key k);
     LeafNode* findLeaf(Key K);
 
-    InnerNode* getRoot();
-    void       changeRoot(InnerNode* newRoot);
-    void       printTree();
+    InnerNode* getRoot();                       // get the root node of the tree
+    void       changeRoot(InnerNode* newRoot);  // change the root of the tree
 
+    void printTree();
+
+    /**
+     * \brief load data from persistent memory.
+     * \return true if any data exists in the pmem.
+     */
     bool bulkLoading();
 };

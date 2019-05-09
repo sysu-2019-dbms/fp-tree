@@ -6,4 +6,5 @@ AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
 AlignTrailingComments: true
 AllowShortBlocksOnASingleLine: true
+AllowShortLoopsOnASingleLine: true
 ColumnLimit: 0

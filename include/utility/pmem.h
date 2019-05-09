@@ -22,7 +22,7 @@ public:
     pmem_stream &operator=(pmem_stream &&b) noexcept;
 
     void swap(pmem_stream &b) noexcept;
-    void flush(void *addr, size_t len) const;
+    void flush(const void *addr, size_t len) const;
     void flush() const;
 
     void close();
@@ -62,8 +62,13 @@ public:
 
     // Partially flush
     template <typename V>
-    void flush_part(V *addr) {
+    void flush_part(const V *addr) {
         flush(addr, sizeof(V));
+    }
+
+    template <typename V, size_t size>
+    void flush_part(const V (&arr)[size]) {
+        flush(arr, sizeof(V) * size);
     }
 };
 

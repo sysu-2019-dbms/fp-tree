@@ -33,7 +33,7 @@ void pmem_stream::swap(pmem_stream &b) noexcept {
     std::swap(is_pmem, b.is_pmem);
 }
 
-void pmem_stream::flush(void *addr, size_t len) const {
+void pmem_stream::flush(const void *addr, size_t len) const {
     if (is_pmem)
         pmem_persist(addr, len);
     else
