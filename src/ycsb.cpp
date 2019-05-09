@@ -81,6 +81,7 @@ void testFPTree() {
     double          single_time;
 
     printf("===================FPtreeDB===================\n");
+    printf("FPTree DB Path: %s\n", FPTREE_DB_PATH);
     printf("Load phase begins \n");
 
     // TODO: read the ycsb_load

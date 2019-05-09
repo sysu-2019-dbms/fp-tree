@@ -29,6 +29,9 @@ OBJ_DIR = ../obj
 BIN_DIR = ./bin
 LIB_DIR = ../lib
 
+FPTREE_DB_PATH:=/pmem-fs/fptree
+FPTREE_FLAGS:=-DFPTREE_DB_PATH=\"$(FPTREE_DB_PATH)\"
+
 SOURCE_FILES = $(shell find $(SRC_DIR) -name '*.cpp')
 OBJS = $(patsubst $(SRC_DIR)/%.cpp,$(OBJ_DIR)/%.o,$(SOURCE_FILES))
 
@@ -40,7 +43,7 @@ OPTFLAGS = -O3 -march=native -funroll-loops
 CFLAGS = -fPIC -std=c99 -O3 -march=native -funroll-loops -Wstrict-overflow -Wstrict-aliasing -Wall -Wextra -pedantic -Wshadow
 
 # Flags passed to the C++ compiler.
-CXXFLAGS = -Wstrict-overflow -Wstrict-aliasing -Wall -Wextra -pthread -std=c++11 -I$(LEVELDB_INC_DIR)
+CXXFLAGS = -Wstrict-overflow -Wstrict-aliasing -Wall -Wextra -pthread -std=c++11 -I$(LEVELDB_INC_DIR) $(FPTREE_FLAGS)
 
 # Google Test libraries
 GTEST_LIBS = $(LIB_DIR)/libgtest.a $(LIB_DIR)/libgtest_main.a
@@ -98,7 +101,7 @@ $(LIB_DIR)/libgtest_main.a : $(OBJ_DIR)/gtest-all.o $(OBJ_DIR)/gtest_main.o
 
 # ===============================TODO: all below=================================
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.cpp $(DEPS) $(OBJ_DIR)
-	$(CXX) $(OPTFLAGS) $(CXXFLAGS) -I $(INC_DIR) -c $< -o $@
+	$(CXX) $(OPTFLAGS) $(CXXFLAGS) $(FPTREE_FLAGS) -I$(INC_DIR) -c $< -o $@
 
 $(OBJ_DIR)/clhash.o : $(SRC_DIR)/clhash.c
 	$(CC) $(CFLAGS) -c $(SRC_DIR)/clhash.c -I $(INC_DIR) -o $@

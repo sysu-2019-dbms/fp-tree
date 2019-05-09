@@ -4,7 +4,11 @@ HEADER_DIR = ../include
 
 FPTREE_HEADER_DIR = $(HEADER_DIR)/fptree
 
-CXXFLAGS = -g -std=c++11
+FPTREE_DB_PATH:=/pmem-fs/fptree
+
+FPTREE_FLAGS:=-DFPTREE_DB_PATH=\"$(FPTREE_DB_PATH)\"
+
+CXXFLAGS = -g -std=c++11 $(FPTREE_FLAGS)
 
 CFLAGS = -fPIC -std=c99 -O3 -msse4.2 -mpclmul -march=native -funroll-loops -Wstrict-overflow -Wstrict-aliasing -Wall -Wextra -pedantic -Wshadow
 
@@ -28,6 +32,7 @@ all : $(LYCSB) $(YCSB) $(MAIN) $(FPTREE) $(UTILITY) $(PALLOCATOR) $(CLHASH)
 
 PROJECT_ROOT:=$(shell pwd)/..
 LEVELDB_DB_PATH:=/pmem-fs/leveldb
+
 LEVELDB_PATH:=$(PROJECT_ROOT)/leveldb
 LEVELDB_INCLUDE_PATH:=$(LEVELDB_PATH)/include
 LEVELDB_LIBRARY_PATH:=$(LEVELDB_PATH)/build
@@ -72,7 +77,7 @@ $(YCSB): ycsb.cpp $(FPTREE) $(PALLOCATOR) $(UTILITY) $(PMEM) $(CLHASH)
 
 	@mkdir -p $(BIN)
 
-	$(CXX) $(CXXFLAGS) $(LEVELDB_FLAGS) $^ -o $@ -I $(HEADER_DIR) -L$(LEVELDB_LIBRARY_PATH) -lleveldb -lpthread -lpmem
+	$(CXX) $(CXXFLAGS) $(LEVELDB_FLAGS) $^ -o $@ -I$(HEADER_DIR) -L$(LEVELDB_LIBRARY_PATH) -lleveldb -lpthread -lpmem
 
 $(LYCSB): lycsb.cpp 
 

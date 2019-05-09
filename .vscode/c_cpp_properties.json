@@ -6,7 +6,8 @@
                 "_DEBUG",
                 "UNICODE",
                 "_UNICODE",
-                "LEVELDB_DB_PATH=\"\"",
+                "LEVELDB_DB_PATH=\"/pmem-fs/leveldb\"",
+                "FPTREE_DB_PATH=\"/pmem-fs/fptree\"",
                 "PROJECT_ROOT=\"\""
             ],
             "includePath": [
