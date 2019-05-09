@@ -4,7 +4,7 @@ HEADER_DIR = ../include
 
 FPTREE_HEADER_DIR = $(HEADER_DIR)/fptree
 
-FPTREE_DB_PATH:=/pmem-fs/fptree
+FPTREE_DB_PATH:=/pmem-fs/fptree/
 
 FPTREE_FLAGS:=-DFPTREE_DB_PATH=\"$(FPTREE_DB_PATH)\"
 
@@ -28,7 +28,7 @@ PMEM = $(OBJ)/pmem.o
 PALLOCATOR = $(OBJ)/pallocator.o
 CLHASH = $(OBJ)/clhash.o
 
-all : $(LYCSB) $(YCSB) $(MAIN) $(FPTREE) $(UTILITY) $(PALLOCATOR) $(CLHASH)
+all : $(OBJ) $(LYCSB) $(YCSB) $(MAIN) $(FPTREE) $(UTILITY) $(PALLOCATOR) $(CLHASH) 
 
 PROJECT_ROOT:=$(shell pwd)/..
 LEVELDB_DB_PATH:=/pmem-fs/leveldb
@@ -86,13 +86,16 @@ $(LYCSB): lycsb.cpp
 	@mkdir -p $(BIN)
 	$(CXX) $(CXXFLAGS) $(LEVELDB_FLAGS) $< -o $@ -L$(LEVELDB_LIBRARY_PATH) -lleveldb -lpthread
 
+$(OBJ):
+	@mkdir -p $(OBJ)
+
 $(BIN):
-	mkdir -p bin
+	@mkdir -p bin
 
 all : $(ALL)
 
 clean :
-	rm -rf *.o ./bin/* ../data/*
+	rm -rf $(OBJ)/*.o ./bin/* ../data/*
 
 cleand : 
 	rm -rf ../data/* 

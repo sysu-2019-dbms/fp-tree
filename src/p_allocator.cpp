@@ -1,6 +1,7 @@
 #include "utility/p_allocator.h"
 #include <fstream>
 #include <iostream>
+#include <unistd.h>
 using namespace std;
 using namespace fp_tree;
 
