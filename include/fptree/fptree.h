@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <iostream>
 #include <queue>
+#include <stack>
 
 #include "utility/p_allocator.h"
 
@@ -21,7 +22,7 @@ protected:
     bool    isLeaf;
 
 public:
-    Node(FPTree* tree, bool isLeaf);
+    Node(FPTree* tree, size_t degree, bool isLeaf);
     virtual ~Node() {}
 
     FPTree* getTree() const;  // the tree that the node belongs to
@@ -164,6 +165,8 @@ private:
 
     size_t bitmapSize;  // the bitmap size of the leaf(bytes)
 
+    LeafNode(PPointer p, FPTree* t, leaf *pmem, LeafNode *next);  // read a leaf from NVM/SSD
+
 public:
     LeafNode(FPTree* tree);           // allocate a new leaf
     LeafNode(PPointer p, FPTree* t);  // read a leaf from NVM/SSD
@@ -191,6 +194,8 @@ public:
 
     // interface with NVM
     void persist() const;
+
+    static LeafNode *loadAllLeafNode(leaf *pmem, FPTree* t);
 };
 
 class FPTree {
