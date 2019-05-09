@@ -351,25 +351,29 @@ LeafNode::LeafNode(FPTree* t) : Node(t, true) {
     n      = 0;
     prev = next = nullptr;
     filePath    = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
-    bitmapSize  = 2 * degree;  // TODO
+    bitmapSize  = 2 * degree;
 }
 
 // reload the leaf with the specific Persistent Pointer
 // need to call the PAllocator
 LeafNode::LeafNode(PPointer pPointer, FPTree* t) : Node(t, true) {
-    this->pPointer = pPointer;
-    pmem           = (leaf*)PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
-    degree         = LEAF_DEGREE;
-    n              = 0;
-    for (size_t i = 0; i < sizeof(pmem->bitmap); ++i)
-        n += countOneBits(pmem->bitmap[i]);
-    prev = next = nullptr;
-    if (pmem->pNext.fileId) {
-        next       = new LeafNode(pmem->pNext, t);
-        next->prev = this;
-    }
-    filePath   = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
-    bitmapSize = 2 * degree;  // TODO
+    LeafNode* cur = this;
+    do {
+        cur->pPointer = pPointer;
+        cur->pmem     = (leaf*)PAllocator::getAllocator()->getLeafPmemAddr(pPointer);
+        cur->degree   = LEAF_DEGREE;
+        cur->n        = 0;
+        for (size_t i = 0; i < sizeof(cur->pmem->bitmap); ++i)
+            cur->n += countOneBits(cur->pmem->bitmap[i]);
+        cur->prev = cur->next = nullptr;
+        cur->filePath         = PAllocator::getAllocator()->getLeafGroupFilePath(pPointer.fileId);
+        cur->bitmapSize       = 2 * cur->degree;
+    } while (cur->pmem->pNext.fileId && ({
+                 cur->next       = new LeafNode(*cur);
+                 pPointer        = cur->pmem->pNext;
+                 cur->next->prev = cur;
+                 cur             = cur->next;
+             }));
 }
 
 LeafNode::~LeafNode() {
@@ -454,7 +458,7 @@ Key LeafNode::findSplitKey() const {
     bzero(pmem->bitmap, sizeof(pmem->bitmap));
     for (size_t i = 0; i < n; ++i) {
         set_bit(pmem->bitmap, i);
-        pmem->kv[i] = arr[i].kv;
+        pmem->kv[i]           = arr[i].kv;
         pmem->fingerprints[i] = arr[i].fingerprint;
     }
     return pmem->kv[(n + 1) / 2].key;
