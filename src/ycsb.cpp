@@ -136,7 +136,7 @@ void testLevelDB() {
 
     // LevelDB
     printf("===================LevelDB====================\n");
-
+    printf("LevelDB DB Path: %s\n", filePath.c_str());
     memset(key, 0, 2200000);
     memset(ifInsert, 0, 2200000);
 
