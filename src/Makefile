@@ -8,7 +8,7 @@ FPTREE_DB_PATH:=/pmem-fs/fptree/
 
 FPTREE_FLAGS:=-DFPTREE_DB_PATH=\"$(FPTREE_DB_PATH)\"
 
-CXXFLAGS = -g -O3 -std=c++11 $(FPTREE_FLAGS)
+CXXFLAGS = -g -O3 -std=c++11 -funroll-loops $(FPTREE_FLAGS)
 
 CFLAGS = -fPIC -std=c99 -O3 -msse4.2 -mpclmul -march=native -funroll-loops -Wstrict-overflow -Wstrict-aliasing -Wall -Wextra -pedantic -Wshadow
 

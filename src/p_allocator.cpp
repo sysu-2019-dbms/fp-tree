@@ -88,8 +88,9 @@ bool PAllocator::getLeaf(PPointer &p, char *&pmem_addr) {
 
     if (!catalog->startLeaf.fileId) {
         catalog->startLeaf = p;
+        catalog.flush_part(&catalog->startLeaf);
     }
-    catalog.flush();
+    catalog.flush_part(&catalog->freeNum);
     return true;
 }
 

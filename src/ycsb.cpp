@@ -193,7 +193,7 @@ void testLevelDB() {
 }
 
 int main() {
-    testLevelDB();
     testFPTree();
+    testLevelDB();
     return 0;
 }
