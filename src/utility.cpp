@@ -47,7 +47,7 @@ PPointer getPNext(PPointer p) {
     }
     int len = (LEAF_DEGREE * 2 + 7) / 8 + p.offset;
     file.seekg(len, ios::beg);
-    file.read((char*)&(t_p), sizeof(PPointer));
+    file.read((char *)&(t_p), sizeof(PPointer));
     return t_p;
 }
 
@@ -55,17 +55,39 @@ int find_first_zero(Byte bitmap[], size_t n) {
     size_t i = 0, byte, len = (n + 7) / 8;
     while (i < len && bitmap[i] == 255) ++i;
     if (i == len) return -1;
-    byte = bitmap[i], i *= 8;
-    while (byte & 1) byte >>= 1, ++i;
+    i *= 8;
+    while (get_bit(bitmap, i)) ++i;
     return i >= n ? -1 : i;
 }
 
 void set_bit(Byte bitmap[], size_t n) {
+#ifdef __GNUC__
+#ifdef __x86_64__
+#define _X86_SETBIT_
+    asm volatile("bts %1, %0"
+                 : "=m"(*(volatile long *)bitmap)
+                 : "Ir"(n));
+#endif
+#endif
+
+#ifndef _X86_SETBIT_
     bitmap[n / 8] |= 1 << (n % 8);
+#endif
 }
 
 void clear_bit(Byte bitmap[], size_t n) {
-    bitmap[n / 8] &= ~(1 << (n % 8));
+#ifdef __GNUC__
+#ifdef __x86_64__
+#define _X86_CLEARBIT_
+    asm volatile("btr %1, %0"
+                 : "=m"(*(volatile long *)bitmap)
+                 : "Ir"(n));
+#endif
+#endif
+
+#ifndef _X86_CLEARBIT_
+    bitmap[n / 8] |= 1 << (n % 8);
+#endif
 }
 
 void clear_bit_since(Byte bitmap[], size_t len, size_t n) {
@@ -79,5 +101,18 @@ void clear_bit_until(Byte bitmap[], size_t /*len*/, size_t n) {
 }
 
 int get_bit(Byte bitmap[], size_t n) {
+#ifdef __GNUC__
+#ifdef __x86_64__
+#define _X86_GETBIT_
+    int oldbit;
+    asm volatile("bt %2, %1; sbbl %0,%0"
+                 : "=r"(oldbit)
+                 : "m"(*(volatile long *)bitmap), "Ir"(n));
+    return oldbit != 0;
+#endif
+#endif
+
+#ifndef _X86_GETBIT_
     return (bitmap[n / 8] >> (n % 8)) & 1;
+#endif
 }
