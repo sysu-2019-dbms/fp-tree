@@ -1,9 +1,9 @@
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include "utility/pmem.h"
 #include "utility/utility.h"
 
-using std::map;
+using std::unordered_map;
 using std::string;
 using std::vector;
 
@@ -48,7 +48,7 @@ private:
     fp_tree::pmem_ptr<allocator_catalog> catalog;
     fp_tree::pmem_stack<PPointer> freeList;
 
-    map<uint64_t, fp_tree::pmem_ptr<leaf_group>> fId2PmAddr;  // the map of fileId to pmem address
+    unordered_map<uint64_t, fp_tree::pmem_ptr<leaf_group>> fId2PmAddr;  // the map of fileId to pmem address
 
     void initFilePmemAddr();  // initial the fId2PmAddr
 public:
