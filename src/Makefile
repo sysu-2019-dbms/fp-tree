@@ -8,7 +8,7 @@ FPTREE_DB_PATH:=/pmem-fs/fptree/
 
 FPTREE_FLAGS:=-DFPTREE_DB_PATH=\"$(FPTREE_DB_PATH)\"
 
-CXXFLAGS = -g -std=c++11 $(FPTREE_FLAGS)
+CXXFLAGS = -g -O3 -std=c++11 $(FPTREE_FLAGS)
 
 CFLAGS = -fPIC -std=c99 -O3 -msse4.2 -mpclmul -march=native -funroll-loops -Wstrict-overflow -Wstrict-aliasing -Wall -Wextra -pedantic -Wshadow
 
@@ -38,19 +38,17 @@ LEVELDB_INCLUDE_PATH:=$(LEVELDB_PATH)/include
 LEVELDB_LIBRARY_PATH:=$(LEVELDB_PATH)/build
 LEVELDB_FLAGS:=-DLEVELDB_DB_PATH=\"$(LEVELDB_DB_PATH)\"  -DPROJECT_ROOT=\"$(PROJECT_ROOT)\"  -I$(LEVELDB_INCLUDE_PATH)
 
-LEVELDB:=\
-	@echo "Building $@" \
-	@if ! [ -d "$(PROJECT_ROOT)/leveldb" ] || ! [ -f "$(PROJECT_ROOT)/leveldb/build/libleveldb.a" ]; then \
-    	echo "leveldb not cloned"; \
-		cd $(PROJECT_ROOT); \
-		git submodule init; \
-		git submodule update; \
-		cd leveldb; \
-		echo "building leveldb"; \
-		mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && cmake --build .; \
-		cd $(PROJECT_ROOT)/src; \
-	fi
+LEVELDB:=$(PROJECT_ROOT)/leveldb/build/libleveldb.a
+
 #============================TODO: all below============================
+$(LEVELDB):	
+	@ cd $(PROJECT_ROOT); \
+	git submodule update --init --recursive; \
+	cd $(PROJECT_ROOT)/leveldb; \
+	echo "building leveldb"; \
+	mkdir -p build && cd build && cmake -DCMAKE_BUILD_TYPE=Release .. && cmake --build .; \
+	cd $(PROJECT_ROOT)/src; \
+
 $(PMEM) : pmem.cpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@ -I $(HEADER_DIR) 
 
@@ -71,18 +69,12 @@ $(CLHASH) : clhash.c $(HEADER_DIR)
 
 	$(CC) $(CFLAGS) -c $< -o $@ -I $(HEADER_DIR)
 
-$(YCSB): ycsb.cpp $(FPTREE) $(PALLOCATOR) $(UTILITY) $(PMEM) $(CLHASH)
-
-	$(LEVELDB)
-
+$(YCSB): ycsb.cpp $(FPTREE) $(PALLOCATOR) $(UTILITY) $(PMEM) $(CLHASH) $(LEVELDB)
 	@mkdir -p $(BIN)
 
 	$(CXX) $(CXXFLAGS) $(LEVELDB_FLAGS) $^ -o $@ -I$(HEADER_DIR) -L$(LEVELDB_LIBRARY_PATH) -lleveldb -lpthread -lpmem
 
-$(LYCSB): lycsb.cpp 
-
-	$(LEVELDB)
-
+$(LYCSB): lycsb.cpp $(LEVELDB)
 	@mkdir -p $(BIN)
 	$(CXX) $(CXXFLAGS) $(LEVELDB_FLAGS) $< -o $@ -L$(LEVELDB_LIBRARY_PATH) -lleveldb -lpthread
 
