@@ -272,19 +272,14 @@ void InnerNode::removeChild(int /*keyIdx*/, int childIdx) {
 
     --n;
     // Simply move the keys and children
-    for (size_t i = childIdx; i < n; ++i) {
-        keys[i]     = keys[i + 1];
-        children[i] = children[i + 1];
-    }
+    memmove(keys + childIdx, keys + childIdx + 1, sizeof(Key) * (n - childIdx));
+    memmove(children + childIdx, children + childIdx + 1, sizeof(Node*) * (n - childIdx));
 }
 
 // update the target entry, return true if the update succeed.
 bool InnerNode::update(const Key& k, const Value& v) {
     int pos = findIndex(k);
-    if (pos == 0)
-        return false;
-    else
-        return children[pos - 1]->update(k, v);
+    return pos != 0 && children[pos - 1]->update(k, v);
 }
 
 // find the target value with the search key, return MAX_VALUE if it fails.
