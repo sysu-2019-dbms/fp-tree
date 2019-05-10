@@ -20,23 +20,42 @@ git submodule update --init --recursive
 
 ## Building & Running
 
-### Setup NVM Simulation Environment 
+### Setup NVM Simulation Environment
 
 Firstly make sure your system meets the requirement of running Ubuntu 18.04 (or higher) and follow the instructions in [Prerequisite](PREREQUISITE.md) section to set up an environment for NVM simulation.
 
 ### Benchmark
 
-Run YCSB on level-db:
+The default DB storage paths are:
+
+- LevelDB: /pmem-fs/leveldb
+- FPTree: /pmem-fs/fptree
+
+Build executables by running:
 
 ```bash
-cd src && make LEVELDB_DB_PATH=/path/to/leveldb ./bin/lycsb
+cd src && make
+```
+
+The executables will be placed in `src/bin` folder.
+
+Or you can specify the path during compilation by setting variables:
+
+```bash
+cd src && make LEVEL_DB_PATH=/path/to/leveldb FPTREE_DB_PATH=/path/to/fptree
+```
+
+*Note: For FPTree you must create the directory manually or you will get runtime error.*
+
+Run YCSB on LevelDB:
+
+```bash
 ./bin/lycsb
 ```
 
 Run YCSB on both LevelDB and FPTree:
 
 ```bash
-cd src && make LEVELDB_DB_PATH=/path/to/leveldb ./bin/ycsb
 ./bin/ycsb
 ```
 
@@ -47,6 +66,8 @@ cd test && make all
 ./bin/utility_test
 ./bin/fptree_test
 ```
+
+You can also specify FPTree storage path by setting `FPTREE_DB_PATH` variable during compilation.
 
 The command `make all` will build googletest library into directory `test`. You can try `make ./bin/utility_test` and `make ./bin/fptree_test` if you have global googletest installed.
 
