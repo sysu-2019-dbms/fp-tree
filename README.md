@@ -28,8 +28,8 @@ Firstly make sure your system meets the requirement of running Ubuntu 18.04 (or 
 
 The default DB storage paths are:
 
-- LevelDB: /pmem-fs/leveldb
-- FPTree: /pmem-fs/fptree
+- LevelDB: `/pmem-fs/leveldb`
+- FPTree: `/pmem-fs/fptree`
 
 Build executables by running:
 
