@@ -548,12 +548,8 @@ Value LeafNode::find(const Key& k) const {
 
 Key LeafNode::getMinKey() const {
     Key  ans = MAX_VALUE;
-    bool met = false;
     for (size_t i = 0; i < bitmapSize; ++i)
         if (getBit(i)) {
-            if (!met)
-                ans = getKey(i), met = true;
-            else
                 ans = min(ans, getKey(i));
         }
     return ans;
