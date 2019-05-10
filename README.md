@@ -1,6 +1,6 @@
-# FP Tree
+# FPTree
 
-Sun Yat-sen University DBMS 2019 Course Project.
+Sun Yat-sen University DBMS 2019 Course Project. A KV-based database optimized for NVM.
 
 Group Members:
 
@@ -59,7 +59,7 @@ Run YCSB on both LevelDB and FPTree:
 ./bin/ycsb
 ```
 
-### Google Test
+### Running Test
 
 ```shell
 cd test && make all
@@ -73,6 +73,19 @@ The command `make all` will build googletest library into directory `test`. You 
 
 ## Test Result
 
+Host Machine:
+
+- CPU: Intel i7-8700K @ 3.70 GHz
+- RAM: DDR4 2666 MHz 32 GB
+- HDD: 2 TB 7200 RPM
+- Host OS: Windows 10
+
+Virtual Machine:
+
+- Guest OS: `Kubuntu 18.10 Linux ubuntu 4.18.0-18-generic #19-Ubuntu SMP Tue Apr 2 18:13:16 UTC 2019 x86_64 x86_64 x86_64 GNU/Linux`
+- RAM: 8GB
+- CPU: 4 cores
+
 ### LYCSB
 
 ![LYCSB](./images/lycsb.png)
@@ -83,8 +96,10 @@ The command `make all` will build googletest library into directory `test`. You 
 
 ### Google Test
 
-#### Utility
+#### Utility Test
+
 ![gtest_utility](./images/gtest_utility.png)
 
-#### FP Tree
+#### FPTree Test
+
 ![gtest_fptree](./images/gtest_fptree.png)
