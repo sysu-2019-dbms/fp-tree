@@ -48,7 +48,7 @@ PPointer getPNext(PPointer p) {
 }
 
 int find_first_zero(Byte bitmap[], size_t n) {
-    size_t i = 0, byte, len = (n + 7) / 8;
+    size_t i = 0, len = (n + 7) / 8;
     while (i < len && bitmap[i] == 255) ++i;
     if (i == len) return -1;
     i *= 8;
