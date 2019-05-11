@@ -8,6 +8,10 @@ using namespace std;
 pmem_stream::pmem_stream() : addr(nullptr), cur(nullptr) {}
 
 pmem_stream::pmem_stream(const string &path, size_t len) : path(path) {
+    map(len);
+}
+
+void pmem_stream::map(size_t len) {
     addr = (char *)pmem_map_file(path.c_str(), len, PMEM_FILE_CREATE, 0666, &mapped_len, &is_pmem);
     cur  = addr;
 }
@@ -25,6 +29,16 @@ pmem_stream &pmem_stream::operator=(pmem_stream &&b) noexcept {
     return *this;
 }
 
+void pmem_stream::seekg(streampos pos, ios::seekdir dir) {
+    if (dir == ios::beg) {
+        cur = addr + pos;
+    } else if (dir == ios::cur) {
+        cur += pos;
+    } else {
+        cur = addr + mapped_len - pos;
+    }
+}
+
 void pmem_stream::swap(pmem_stream &b) noexcept {
     std::swap(path, b.path);
     std::swap(addr, b.addr);
@@ -33,17 +47,20 @@ void pmem_stream::swap(pmem_stream &b) noexcept {
     std::swap(is_pmem, b.is_pmem);
 }
 
+void pmem_stream::flush(const void *addr, size_t len) const {
+    if (is_pmem)
+        pmem_persist(addr, len);
+    else
+        pmem_msync(addr, len);
+}
+
 void pmem_stream::flush() const {
     if (!addr) return;
-    if (is_pmem)
-        pmem_persist(addr, mapped_len);
-    else
-        pmem_msync(addr, mapped_len);
+    flush(addr, mapped_len);
 }
 
 void pmem_stream::close() {
     if (!addr) return;
-    flush();
     pmem_unmap(addr, mapped_len);
 }
 

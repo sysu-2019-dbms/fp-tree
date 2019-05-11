@@ -84,7 +84,7 @@ int main() {
     single_time = (finish.tv_sec - start.tv_sec) * 1000000000.0 +
                   (finish.tv_nsec - start.tv_nsec);
 
-    printf("Load phase finishes: %d items are inserted \n", inserted);
+    printf("Load phase finishes: %lu items are inserted \n", inserted);
     printf("Load phase used time: %fs\n", single_time / 1000000000.0);
     printf("Load phase single insert time: %fns\n", single_time / inserted);
 
@@ -105,8 +105,8 @@ int main() {
     clock_gettime(CLOCK_MONOTONIC, &finish);
     single_time = (finish.tv_sec - start.tv_sec) +
                   (finish.tv_nsec - start.tv_nsec) / 1000000000.0;
-    printf("Run phase finishes: %d/%d items are inserted/searched\n",
-           operation_num - inserted, inserted);
+    printf("Run phase finishes: %lu/%lu items are inserted/searched\n",
+           operation_num - queried, queried);
     printf("Run phase throughput: %f operations per second \n",
            READ_WRITE_NUM / single_time);
     return 0;

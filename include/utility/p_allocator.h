@@ -1,9 +1,9 @@
-#include <map>
+#include <unordered_map>
 #include <vector>
 #include "utility/pmem.h"
 #include "utility/utility.h"
 
-using std::map;
+using std::unordered_map;
 using std::string;
 using std::vector;
 
@@ -19,6 +19,8 @@ struct empty_free_list {
 struct key_value {
     Key   key;
     Value value;
+
+    bool operator<(const key_value& b) const;
 } __attribute__((packed));
 
 struct leaf {
@@ -33,20 +35,20 @@ struct leaf_group {
     Byte     bitmap[LEAF_GROUP_AMOUNT];
     leaf     leaves[LEAF_GROUP_AMOUNT];
 
-    bool  valid(PPointer p);
-    Byte& used(PPointer p);
+    bool        valid(PPointer p) const;
+    Byte const& used(PPointer p) const;
+    Byte&       used(PPointer p);
 } __attribute__((packed));
 
 // Use this to allocate or free a leaf node in NVM
 class PAllocator {
 private:
     static PAllocator* pAllocator;  // singleton
-    PPointer           startLeaf;   // first leaf's PPointer of fptree
-    uint64_t           maxFileId;   // current fileId not used
-    uint64_t           freeNum;     // free leaves amount
-    vector<PPointer>   freeList;    // leaves list: the leaf that has been allocatored but is free
+    
+    fp_tree::pmem_ptr<allocator_catalog> catalog;
+    fp_tree::pmem_stack<PPointer> freeList;
 
-    map<uint64_t, fp_tree::pmem_ptr<leaf_group>> fId2PmAddr;  // the map of fileId to pmem address
+    unordered_map<uint64_t, fp_tree::pmem_ptr<leaf_group>> fId2PmAddr;  // the map of fileId to pmem address
 
     void initFilePmemAddr();  // initial the fId2PmAddr
 public:
@@ -55,19 +57,21 @@ public:
     PAllocator();
     ~PAllocator();
 
-    char* getLeafPmemAddr(PPointer p);
+    string                         getLeafGroupFilePath(uint64_t fileId) const;
+    fp_tree::pmem_ptr<leaf_group>& getLeafGroup(PPointer p);
+
+    leaf* getLeafPmemAddr(PPointer p) const;       // Get the persistent memory address related to the PPointer.
     bool  getLeaf(PPointer& p, char*& pmem_addr);  // get and use a free leaf
     bool  freeLeaf(PPointer p);                    // free the used leaf
     bool  newLeafGroup();                          // allocate a new group of leaves
-    bool  ifLeafUsed(PPointer p);                  // judge whether the leaf is used
-    bool  ifLeafFree(PPointer p);                  // judge whether the leaf is free
-    bool  ifLeafExist(PPointer p);                 // judge whether the leaf exists
+    bool  ifLeafUsed(PPointer p) const;            // judge whether the leaf is used
+    bool  ifLeafFree(PPointer p) const;            // judge whether the leaf is free
+    bool  ifLeafExist(PPointer p) const;           // judge whether the leaf exists
 
-    bool persistCatalog();  // persist the catalog file in NVM/SSD
-
-    PPointer getUsedLeaf(int idx);
-    PPointer getFreeLeaf(int idx);
-    PPointer getStartPointer() { return this->startLeaf; }
-    uint64_t getMaxFileId() { return this->maxFileId; }
-    uint64_t getFreeNum() { return this->freeNum; }
+    PPointer getUsedLeaf(int idx) const;
+    PPointer getFreeLeaf(int idx) const;
+    PPointer getStartPointer() const;
+    void     setStartPointer(PPointer startPointer);
+    uint64_t getMaxFileId() const;
+    uint64_t getFreeNum() const;
 };
